@@ -98,35 +98,43 @@ export default function Landing() {
         <div className="lp-orb lp-orb-3" />
 
         <div className="lp-hero-inner">
-          <div className="lp-hero-badge">
-            <span className="lp-hero-badge-dot" />
-            AI-Powered Investment Intelligence
+          {/* ── Left Column: text content ── */}
+          <div className="lp-hero-left">
+            <div className="lp-hero-badge">
+              <span className="lp-hero-badge-dot" />
+              AI-Powered Investment Intelligence
+            </div>
+
+            <h1 className="lp-hero-h1">
+              Analyze any company
+              <span className="lp-hero-gradient"> in seconds</span>
+              <br />with AI
+            </h1>
+
+            <p className="lp-hero-sub">
+              InvestIQ combines real-time financial data with Google Gemini AI to deliver
+              institutional-grade company analysis — Bull case, Bear case, Key metrics,
+              and an investment verdict. No subscriptions. No jargon.
+            </p>
+
+            <div className="lp-hero-actions">
+              <button className="lp-btn-primary" onClick={() => navigate('/app')}>
+                <span>Start Analyzing Free</span>
+                <span className="lp-btn-arrow">→</span>
+              </button>
+              <a href="#how-it-works" className="lp-btn-ghost">
+                See how it works ↓
+              </a>
+            </div>
+
+            <div className="lp-hero-trust">
+              <span className="lp-trust-dot" />
+              <span>No sign-up &nbsp;·&nbsp; Free to use &nbsp;·&nbsp; Instant results</span>
+            </div>
           </div>
 
-          <h1 className="lp-hero-h1">
-            Analyze any company
-            <span className="lp-hero-gradient"> in seconds</span>
-            <br />with AI
-          </h1>
-
-          <p className="lp-hero-sub">
-            InvestIQ combines real-time financial data with Google Gemini AI to deliver
-            institutional-grade company analysis — Bull case, Bear case, Key metrics,
-            and an investment verdict. No subscriptions. No jargon.
-          </p>
-
-          <div className="lp-hero-actions">
-            <button className="lp-btn-primary" onClick={() => navigate('/app')}>
-              <span>Start Analyzing Free</span>
-              <span className="lp-btn-arrow">→</span>
-            </button>
-            <a href="#how-it-works" className="lp-btn-ghost">
-              See how it works ↓
-            </a>
-          </div>
-
-          {/* Mock UI preview */}
-          <div className="lp-hero-preview">
+          {/* ── Right Column: browser mockup ── */}
+          <div className="lp-hero-right">
             <div className="lp-preview-card">
               <div className="lp-preview-header">
                 <div className="lp-preview-dots">
