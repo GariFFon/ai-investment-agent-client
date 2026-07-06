@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import LoadingState from './components/LoadingState';
 import ResultCard from './components/ResultCard';
 import HistoryPanel from './components/HistoryPanel';
-import { analyzeCompany, getCompany, searchCompanies } from './services/api';
+import { analyzeCompany, reanalyzeCompany, getCompany, searchCompanies } from './services/api';
 import './index.css';
 
 /* ── Debounce hook ───────────────────────────────────────────────────────── */
@@ -185,6 +185,22 @@ export default function App() {
     }
   };
 
+  const handleReanalyze = async () => {
+    if (!result) return;
+    setLoading(true);
+    setError(null);
+    setCurrentCompany(result.companyName);
+    try {
+      const data = await reanalyzeCompany(result.companyName, result.ticker);
+      setResult(data);
+      setRefreshHistory((n) => n + 1);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Reanalysis failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleHistorySelect = async (item) => {
     try {
       const data = await getCompany(item.ticker);
@@ -235,7 +251,7 @@ export default function App() {
           </div>
         )}
 
-        {result && !loading && <ResultCard data={result} />}
+        {result && !loading && <ResultCard data={result} onReanalyze={handleReanalyze} />}
 
         {!result && !loading && !error && (
           <EmptyState onSearch={() => setShowSpotlight(true)} />

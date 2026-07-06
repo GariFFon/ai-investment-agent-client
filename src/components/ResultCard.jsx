@@ -3,6 +3,7 @@ import {
   TrendingUp, TrendingDown, Building2, Users, Globe,
   Calendar, Activity, ExternalLink, DollarSign, Percent,
   BarChart3, ChevronDown, ChevronUp, Tag, Zap, Newspaper,
+  Target, Award, GitCompare, Eye, ArrowUpRight, ArrowDownRight,
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -19,6 +20,7 @@ const fmtCurrency = (v) => {
 };
 const fmtNum    = (v, dec = 2) => (v == null || isNaN(v) ? 'N/A' : Number(v).toFixed(dec));
 const fmtPct    = (v, dec = 2) => (v == null || isNaN(v) ? 'N/A' : `${Number(v * (Math.abs(v) < 2 ? 100 : 1)).toFixed(dec)}%`);
+const fmtPctRaw = (v, dec = 1) => (v == null || isNaN(v) ? 'N/A' : `${(v * 100).toFixed(dec)}%`);
 const fmtLargeNum = (v) => {
   if (v == null) return 'N/A';
   if (v >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
@@ -32,6 +34,25 @@ const VERDICT_CFG = {
   HOLD:   { color: '#d97706', bg: '#fffbeb', border: '#fcd34d', glow: 'rgba(217,119,6,0.12)',  icon: '~', label: 'HOLD'   },
   PASS:   { color: '#dc2626', bg: '#fef2f2', border: '#fecaca', glow: 'rgba(220,38,38,0.12)',  icon: '✗', label: 'PASS'   },
 };
+
+/* Source badge configs */
+const SRC = {
+  fmp:   { label: 'FMP',   bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' },
+  yahoo: { label: 'Yahoo', bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
+  both:  { label: 'FMP + Yahoo', bg: '#f3e8ff', color: '#6b21a8', border: '#d8b4fe' },
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Source Badge
+───────────────────────────────────────────────────────────────────────────── */
+function SourceBadge({ src = 'fmp' }) {
+  const cfg = SRC[src] ?? SRC.fmp;
+  return (
+    <span className="rc-src-badge" style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}>
+      {src === 'fmp' ? '🔵' : src === 'both' ? '🔵🟡' : '🟡'} {cfg.label}
+    </span>
+  );
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Animated Confidence Ring
@@ -75,7 +96,7 @@ function ConfidenceRing({ confidence = 0 }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Reusable card wrapper
+   Card wrapper
 ───────────────────────────────────────────────────────────────────────────── */
 function Card({ children, style, className = '' }) {
   return (
@@ -86,20 +107,21 @@ function Card({ children, style, className = '' }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Section header
+   Section header with optional source badge
 ───────────────────────────────────────────────────────────────────────────── */
-function SectionHeader({ icon, title, accent = '#6366f1' }) {
+function SectionHeader({ icon, title, accent = '#6366f1', src }) {
   return (
     <div className="rc-section-header">
       <div className="rc-section-accent" style={{ background: accent }} />
       <span className="rc-section-icon" style={{ color: accent }}>{icon}</span>
       <h3 className="rc-section-title">{title}</h3>
+      {src && <SourceBadge src={src} />}
     </div>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Stat Item (profile meta)
+   Stat Item
 ───────────────────────────────────────────────────────────────────────────── */
 function StatItem({ icon, label, value, href }) {
   return (
@@ -116,7 +138,7 @@ function StatItem({ icon, label, value, href }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Financial Table
+   Data Table
 ───────────────────────────────────────────────────────────────────────────── */
 function DataTable({ headers, rows, accentColor = '#6366f1' }) {
   return (
@@ -146,22 +168,116 @@ function DataTable({ headers, rows, accentColor = '#6366f1' }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   Cross-Source Comparison Table
+───────────────────────────────────────────────────────────────────────────── */
+function ComparisonTable({ rows }) {
+  // rows: [{ metric, fmp, yahoo, fmpRaw, yahooRaw }]
+  const getDiffClass = (a, b) => {
+    if (a === 'N/A' || b === 'N/A') return '';
+    const numA = parseFloat(String(a).replace(/[^0-9.-]/g, ''));
+    const numB = parseFloat(String(b).replace(/[^0-9.-]/g, ''));
+    if (isNaN(numA) || isNaN(numB) || numA === 0) return '';
+    const diff = Math.abs((numA - numB) / Math.abs(numA)) * 100;
+    if (diff < 5) return 'rc-diff-low';
+    if (diff < 15) return 'rc-diff-mid';
+    return 'rc-diff-high';
+  };
+
+  const getDiffLabel = (a, b) => {
+    const numA = parseFloat(String(a).replace(/[^0-9.-]/g, ''));
+    const numB = parseFloat(String(b).replace(/[^0-9.-]/g, ''));
+    if (isNaN(numA) || isNaN(numB) || a === 'N/A' || b === 'N/A') return '—';
+    const diff = ((numB - numA) / Math.abs(numA)) * 100;
+    return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`;
+  };
+
+  return (
+    <div className="rc-table-wrap">
+      <table className="rc-table">
+        <thead>
+          <tr style={{ background: '#7c3aed0d' }}>
+            <th className="rc-th" style={{ color: '#7c3aed' }}>Metric</th>
+            <th className="rc-th" style={{ color: '#1d4ed8' }}>🔵 FMP</th>
+            <th className="rc-th" style={{ color: '#92400e' }}>🟡 Yahoo Finance</th>
+            <th className="rc-th" style={{ color: '#7c3aed' }}>Difference</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => {
+            const cls = getDiffClass(row.fmp, row.yahoo);
+            const diffLabel = getDiffLabel(row.fmp, row.yahoo);
+            return (
+              <tr key={i} className="rc-tr">
+                <td className="rc-td" style={{ fontWeight: 700, color: '#334155' }}>{row.metric}</td>
+                <td className="rc-td rc-src-fmp">{row.fmp}</td>
+                <td className="rc-td rc-src-yahoo">{row.yahoo}</td>
+                <td className={`rc-td ${cls}`}>{diffLabel}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Analyst Recommendation Visual Bar
+───────────────────────────────────────────────────────────────────────────── */
+function RecBar({ strongBuy = 0, buy = 0, hold = 0, sell = 0, strongSell = 0 }) {
+  const total = strongBuy + buy + hold + sell + strongSell || 1;
+  const bars = [
+    { label: 'Strong Buy', count: strongBuy, color: '#059669' },
+    { label: 'Buy',        count: buy,       color: '#34d399' },
+    { label: 'Hold',       count: hold,      color: '#f59e0b' },
+    { label: 'Sell',       count: sell,      color: '#f87171' },
+    { label: 'Strong Sell',count: strongSell,color: '#dc2626' },
+  ];
+  return (
+    <div className="rc-rec-bar-wrap">
+      <div className="rc-rec-stacked">
+        {bars.map((b, i) => b.count > 0 && (
+          <div key={i} title={`${b.label}: ${b.count}`}
+            style={{ width: `${(b.count / total) * 100}%`, background: b.color, height: '100%', borderRadius: i === 0 ? '6px 0 0 6px' : i === bars.length - 1 || b === bars[bars.length - 1] ? '0 6px 6px 0' : '0' }} />
+        ))}
+      </div>
+      <div className="rc-rec-legend">
+        {bars.map((b, i) => (
+          <div key={i} className="rc-rec-legend-item">
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: b.color, display: 'inline-block', flexShrink: 0 }} />
+            <span>{b.label}: <strong>{b.count}</strong></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    Main ResultCard
 ───────────────────────────────────────────────────────────────────────────── */
-export default function ResultCard({ data }) {
+export default function ResultCard({ data, onReanalyze }) {
   const [reasoningOpen, setReasoningOpen] = useState(false);
+  const [reanalyzing, setReanalyzing]     = useState(false);
 
-  const vc = VERDICT_CFG[data.verdict] ?? VERDICT_CFG.HOLD;
-  const raw = data.rawData ?? {};
-  const profile  = raw.companyProfile  ?? {};
-  const income   = raw.incomeStatement ?? [];
-  const balance  = raw.balanceSheet    ?? [];
-  const cashflow = raw.cashFlow        ?? [];
-  const km       = raw.keyMetrics      ?? {};
-  const news     = raw.recentNews      ?? [];
-  const peers    = raw.peers           ?? [];
+  const handleReanalyze = async () => {
+    if (reanalyzing || !onReanalyze) return;
+    setReanalyzing(true);
+    try { await onReanalyze(); } finally { setReanalyzing(false); }
+  };
 
-  /* Table rows */
+  const vc      = VERDICT_CFG[data.verdict] ?? VERDICT_CFG.HOLD;
+  const raw     = data.rawData ?? {};
+  const profile = raw.companyProfile  ?? {};
+  const income  = raw.incomeStatement ?? [];
+  const balance = raw.balanceSheet    ?? [];
+  const cashflow= raw.cashFlow        ?? [];
+  const km      = raw.keyMetrics      ?? {};
+  const news    = raw.recentNews      ?? [];
+  const peers   = raw.peers           ?? [];
+  const yf      = raw.yahooData       ?? null;   // Yahoo Finance data
+
+  /* ── FMP Table rows ── */
   const incomeRows = income.map((d) => [
     { val: d.year, cls: 'rc-td-year' },
     fmtCurrency(d.revenue),
@@ -193,24 +309,112 @@ export default function ResultCard({ data }) {
     fmtCurrency(Math.abs(d.dividendsPaid)),
   ]);
 
-  const kmCards = [
-    { label: 'P/E Ratio',         value: fmtNum(km.peRatio),          icon: <Activity size={13}/>,      accent: '#6366f1' },
-    { label: 'P/B Ratio',         value: fmtNum(km.pbRatio),          icon: <BarChart3 size={13}/>,     accent: '#8b5cf6' },
-    { label: 'EV/EBITDA',         value: fmtNum(km.evToEbitda),       icon: <DollarSign size={13}/>,    accent: '#7c3aed' },
-    { label: 'Price/Sales',       value: fmtNum(km.priceToSales),     icon: <TrendingUp size={13}/>,    accent: '#6366f1' },
-    { label: 'Debt/Equity',       value: fmtNum(km.debtToEquity),     icon: <TrendingDown size={13}/>,  accent: '#e11d48' },
-    { label: 'ROE',               value: fmtPct(km.roe),              icon: <Percent size={13}/>,       accent: '#059669' },
-    { label: 'ROA',               value: fmtPct(km.roa),              icon: <Percent size={13}/>,       accent: '#0891b2' },
-    { label: 'Interest Coverage', value: fmtNum(km.interestCoverage), icon: <Activity size={13}/>,      accent: '#d97706' },
-    { label: 'Dividend Yield',    value: fmtPct(km.dividendYield),    icon: <DollarSign size={13}/>,    accent: '#7c3aed' },
-    { label: 'Payout Ratio',      value: fmtPct(km.payoutRatio),      icon: <Percent size={13}/>,       accent: '#059669' },
+  /* ── FMP Key Metrics Groups ── */
+  const kmGroups = [
+    {
+      title: 'Valuation', accent: '#6366f1',
+      cards: [
+        { label: 'P/E Ratio',       value: fmtNum(km.peRatio),           icon: <Activity size={13}/>,     accent: '#6366f1' },
+        { label: 'P/B Ratio',       value: fmtNum(km.pbRatio),           icon: <BarChart3 size={13}/>,    accent: '#8b5cf6' },
+        { label: 'P/S Ratio',       value: fmtNum(km.priceToSales),      icon: <TrendingUp size={13}/>,   accent: '#7c3aed' },
+        { label: 'EV/EBITDA',       value: fmtNum(km.evToEbitda),        icon: <DollarSign size={13}/>,   accent: '#6366f1' },
+        { label: 'EV/Sales',        value: fmtNum(km.evToSales),         icon: <DollarSign size={13}/>,   accent: '#8b5cf6' },
+        { label: 'EV/FCF',          value: fmtNum(km.evToFreeCashFlow),  icon: <DollarSign size={13}/>,   accent: '#7c3aed' },
+        { label: 'Graham Number',   value: fmtNum(km.grahamNumber),      icon: <BarChart3 size={13}/>,    accent: '#8b5cf6' },
+        { label: 'Earnings Yield',  value: fmtPct(km.earningsYield),     icon: <Percent size={13}/>,      accent: '#7c3aed' },
+        { label: 'FCF Yield',       value: fmtPct(km.freeCashFlowYield), icon: <Percent size={13}/>,      accent: '#6366f1' },
+      ],
+    },
+    {
+      title: 'Profitability', accent: '#059669',
+      cards: [
+        { label: 'ROE',     value: fmtPct(km.roe),                        icon: <Percent size={13}/>, accent: '#059669' },
+        { label: 'ROA',     value: fmtPct(km.roa),                        icon: <Percent size={13}/>, accent: '#0891b2' },
+        { label: 'ROIC',    value: fmtPct(km.returnOnInvestedCapital),    icon: <Percent size={13}/>, accent: '#059669' },
+        { label: 'ROCE',    value: fmtPct(km.returnOnCapitalEmployed),    icon: <Percent size={13}/>, accent: '#0891b2' },
+        { label: 'Income Quality', value: fmtNum(km.incomeQuality),       icon: <Activity size={13}/>,accent: '#059669' },
+      ],
+    },
+    {
+      title: 'Leverage & Coverage', accent: '#e11d48',
+      cards: [
+        { label: 'Debt/Equity',       value: fmtNum(km.debtToEquity),    icon: <TrendingDown size={13}/>, accent: '#e11d48' },
+        { label: 'Net Debt/EBITDA',   value: fmtNum(km.netDebtToEBITDA), icon: <TrendingDown size={13}/>, accent: '#dc2626' },
+        { label: 'Interest Coverage', value: fmtNum(km.interestCoverage),icon: <Activity size={13}/>,     accent: '#e11d48' },
+      ],
+    },
+    {
+      title: 'Liquidity', accent: '#d97706',
+      cards: [
+        { label: 'Current Ratio',   value: fmtNum(km.currentRatio),      icon: <Activity size={13}/>,    accent: '#d97706' },
+        { label: 'Quick Ratio',     value: fmtNum(km.quickRatio),        icon: <Activity size={13}/>,    accent: '#f59e0b' },
+        { label: 'Working Capital', value: fmtCurrency(km.workingCapital),icon: <DollarSign size={13}/>, accent: '#d97706' },
+      ],
+    },
+    {
+      title: 'Dividends', accent: '#7c3aed',
+      cards: [
+        { label: 'Dividend Yield', value: fmtPct(km.dividendYield),    icon: <DollarSign size={13}/>, accent: '#7c3aed' },
+        { label: 'Payout Ratio',   value: fmtPct(km.payoutRatio),      icon: <Percent size={13}/>,    accent: '#8b5cf6' },
+        { label: 'Div/Share',      value: fmtNum(km.dividendPerShare), icon: <DollarSign size={13}/>, accent: '#7c3aed' },
+      ],
+    },
+    {
+      title: 'Efficiency & CapEx', accent: '#0891b2',
+      cards: [
+        { label: 'CapEx/Sales',         value: fmtPct(km.capexToRevenue),           icon: <BarChart3 size={13}/>, accent: '#0891b2' },
+        { label: 'CapEx/Op. CF',        value: fmtPct(km.capexToOperatingCashFlow), icon: <BarChart3 size={13}/>, accent: '#0d9488' },
+        { label: 'R&D/Revenue',         value: fmtPct(km.researchAndDevelopementToRevenue), icon: <Activity size={13}/>, accent: '#0891b2' },
+        { label: 'Days Receivable',     value: fmtNum(km.daysOfSalesOutstanding, 1),icon: <Calendar size={13}/>, accent: '#0891b2' },
+        { label: 'Days Payable',        value: fmtNum(km.daysOfPayablesOutstanding,1),icon:<Calendar size={13}/>, accent: '#0d9488' },
+        { label: 'Cash Conv. Cycle',    value: fmtNum(km.cashConversionCycle, 1),   icon: <Calendar size={13}/>, accent: '#0891b2' },
+      ],
+    },
   ];
+
+  /* ── Cross-Source Comparison rows ── */
+  const yfc = yf?.currentFinancials ?? {};
+  const yfk = yf?.keyStats ?? {};
+  const comparisonRows = [
+    { metric: 'P/E Ratio (Trailing)',  fmp: fmtNum(km.peRatio),          yahoo: fmtNum(yfk.trailingEps && yfc.currentPrice ? yfc.currentPrice / yfk.trailingEps : null) },
+    { metric: 'Forward P/E',          fmp: 'N/A',                        yahoo: fmtNum(yfk.forwardPE) },
+    { metric: 'P/B Ratio',            fmp: fmtNum(km.pbRatio),           yahoo: fmtNum(yfk.priceToBook) },
+    { metric: 'P/S Ratio',            fmp: fmtNum(km.priceToSales),      yahoo: fmtNum(yfk.priceToSales) },
+    { metric: 'EV/EBITDA',            fmp: fmtNum(km.evToEbitda),        yahoo: fmtNum(yfk.enterpriseToEbitda) },
+    { metric: 'EV/Revenue',           fmp: fmtNum(km.evToSales),         yahoo: fmtNum(yfk.enterpriseToRevenue) },
+    { metric: 'PEG Ratio',            fmp: 'N/A',                        yahoo: fmtNum(yfk.pegRatio) },
+    { metric: 'ROE',                  fmp: fmtPct(km.roe),               yahoo: fmtPctRaw(yfc.returnOnEquity) },
+    { metric: 'ROA',                  fmp: fmtPct(km.roa),               yahoo: fmtPctRaw(yfc.returnOnAssets) },
+    { metric: 'Debt/Equity',          fmp: fmtNum(km.debtToEquity),      yahoo: fmtNum(yfc.debtToEquity) },
+    { metric: 'Current Ratio',        fmp: fmtNum(km.currentRatio),      yahoo: fmtNum(yfc.currentRatio) },
+    { metric: 'Quick Ratio',          fmp: fmtNum(km.quickRatio),        yahoo: fmtNum(yfc.quickRatio) },
+    { metric: 'Gross Margin',         fmp: fmtPct(income[0]?.grossMargin), yahoo: fmtPctRaw(yfc.grossMargins) },
+    { metric: 'Operating Margin',     fmp: fmtPct(income[0]?.operatingMargin), yahoo: fmtPctRaw(yfc.operatingMargins) },
+    { metric: 'Net Margin',           fmp: fmtPct(income[0]?.netMargin), yahoo: fmtPctRaw(yfc.profitMargins) },
+    { metric: 'Dividend Yield',       fmp: fmtPct(km.dividendYield),     yahoo: fmtNum(yfk.dividendYield) },
+  ].filter(r => r.fmp !== 'N/A' || r.yahoo !== 'N/A');
+
+  /* ── Yahoo analyst rec trend ── */
+  const recNow  = yf?.analystRecommendations?.[0] ?? null;
+  const recPrev = yf?.analystRecommendations?.[1] ?? null;
+
+  /* ── Rec key → display ── */
+  const REC_DISPLAY = {
+    strong_buy: { label: 'Strong Buy', color: '#059669', bg: '#f0fdf4' },
+    buy:        { label: 'Buy',        color: '#34d399', bg: '#ecfdf5' },
+    hold:       { label: 'Hold',       color: '#d97706', bg: '#fffbeb' },
+    sell:       { label: 'Sell',       color: '#ef4444', bg: '#fef2f2' },
+    strong_sell:{ label: 'Strong Sell',color: '#dc2626', bg: '#fef2f2' },
+  };
+  const recCfg = REC_DISPLAY[yfc.recommendationKey] ?? { label: yfc.recommendationKey ?? 'N/A', color: '#64748b', bg: '#f8fafc' };
+
+  /* ── Action label ── */
+  const actionLabel = (a) => ({ up: '⬆️ Upgrade', down: '⬇️ Downgrade', init: '🆕 Initiate', reit: '↩️ Reiterate' })[a] ?? a;
 
   return (
     <>
       {/* ── Scoped Styles ── */}
       <style>{`
-        /* Layout */
         .rc-dashboard {
           display: flex;
           flex-direction: column;
@@ -218,13 +422,10 @@ export default function ResultCard({ data }) {
           animation: rcFadeUp 0.4s ease both;
           font-family: 'Inter', system-ui, sans-serif;
         }
-
         @keyframes rcFadeUp {
           from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-
-        /* Card base */
         .rc-card {
           background: #ffffff;
           border: 1px solid rgba(15,23,42,0.07);
@@ -233,90 +434,37 @@ export default function ResultCard({ data }) {
           box-shadow: 0 1px 3px rgba(15,23,42,0.05), 0 4px 12px rgba(99,102,241,0.05);
           transition: box-shadow 0.22s ease;
         }
-        .rc-card:hover {
-          box-shadow: 0 2px 8px rgba(15,23,42,0.07), 0 8px 24px rgba(99,102,241,0.08);
-        }
+        .rc-card:hover { box-shadow: 0 2px 8px rgba(15,23,42,0.07), 0 8px 24px rgba(99,102,241,0.08); }
 
-        /* Section header */
-        .rc-section-header {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 20px;
-        }
-        .rc-section-accent {
-          width: 3px;
-          height: 18px;
-          border-radius: 2px;
-          flex-shrink: 0;
-        }
+        .rc-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .rc-section-accent { width: 3px; height: 18px; border-radius: 2px; flex-shrink: 0; }
         .rc-section-icon { display: flex; align-items: center; }
-        .rc-section-title {
-          font-size: 12px;
-          font-weight: 800;
-          color: #0f172a;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          margin: 0;
+        .rc-section-title { font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.08em; margin: 0; }
+
+        /* Source badge */
+        .rc-src-badge {
+          display: inline-flex; align-items: center; gap: 3px;
+          padding: 2px 9px; border-radius: 100px;
+          font-size: 10.5px; font-weight: 700; border: 1px solid;
+          letter-spacing: 0.02em; flex-shrink: 0;
         }
 
-        /* Company header */
-        .rc-company-name {
-          font-size: 26px;
-          font-weight: 900;
-          color: #0f172a;
-          letter-spacing: -0.025em;
-          margin: 0 0 10px;
-          line-height: 1.2;
-        }
-        .rc-badges {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
-          margin-bottom: 16px;
-        }
-        .rc-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 3px 10px;
-          border-radius: 7px;
-          font-size: 11.5px;
-          font-weight: 700;
-          border: 1px solid;
-          letter-spacing: 0.01em;
-        }
+        .rc-company-name { font-size: 26px; font-weight: 900; color: #0f172a; letter-spacing: -0.025em; margin: 0 0 10px; line-height: 1.2; }
+        .rc-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .rc-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 700; border: 1px solid; letter-spacing: 0.01em; }
         .rc-badge-ticker   { background: #ede9fe; border-color: #c4b5fd; color: #5b21b6; font-family: 'Courier New', monospace; }
         .rc-badge-sector   { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
         .rc-badge-industry { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
         .rc-badge-exchange { background: #fdf4ff; border-color: #e9d5ff; color: #7e22ce; }
         .rc-badge-cache    { background: #f8fafc; border-color: #e2e8f0; color: #94a3b8; font-size: 10.5px; padding: 2px 9px; border-radius: 100px; }
 
-        /* Price block */
         .rc-price-block { text-align: right; flex-shrink: 0; }
         .rc-price { font-size: 30px; font-weight: 900; color: #6366f1; line-height: 1; letter-spacing: -0.02em; }
-        .rc-beta { font-size: 11.5px; color: #94a3b8; margin-top: 4px; }
+        .rc-beta  { font-size: 11.5px; color: #94a3b8; margin-top: 4px; }
 
-        /* Description */
-        .rc-description {
-          font-size: 13.5px;
-          color: #475569;
-          line-height: 1.7;
-          margin: 16px 0 0;
-          padding-top: 16px;
-          border-top: 1px solid rgba(15,23,42,0.06);
-        }
+        .rc-description { font-size: 13.5px; color: #475569; line-height: 1.7; margin: 16px 0 0; padding-top: 16px; border-top: 1px solid rgba(15,23,42,0.06); }
 
-        /* Profile stats grid */
-        .rc-stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          gap: 12px;
-          margin-top: 16px;
-          padding-top: 16px;
-          border-top: 1px solid rgba(15,23,42,0.06);
-        }
+        .rc-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(15,23,42,0.06); }
         .rc-stat-item { display: flex; align-items: flex-start; gap: 9px; }
         .rc-stat-icon { color: #6366f1; margin-top: 1px; flex-shrink: 0; }
         .rc-stat-label { font-size: 10.5px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -324,142 +472,49 @@ export default function ResultCard({ data }) {
         .rc-link { font-size: 13px; color: #6366f1; font-weight: 600; text-decoration: none; margin-top: 2px; display: block; }
         .rc-link:hover { text-decoration: underline; }
 
-        /* Peers */
         .rc-peers { margin-top: 16px; }
         .rc-peers-label { font-size: 10.5px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; margin-bottom: 8px; }
         .rc-peers-list { display: flex; flex-wrap: wrap; gap: 5px; }
-        .rc-peer-chip {
-          padding: 3px 10px;
-          background: #f8fafc;
-          border: 1px solid rgba(15,23,42,0.08);
-          border-radius: 100px;
-          font-size: 12px;
-          font-weight: 700;
-          color: #475569;
-          transition: all 0.15s ease;
-          font-family: 'Courier New', monospace;
-          letter-spacing: 0.03em;
-        }
+        .rc-peer-chip { padding: 3px 10px; background: #f8fafc; border: 1px solid rgba(15,23,42,0.08); border-radius: 100px; font-size: 12px; font-weight: 700; color: #475569; transition: all 0.15s ease; font-family: 'Courier New', monospace; letter-spacing: 0.03em; }
         .rc-peer-chip:hover { background: #ede9fe; border-color: #c4b5fd; color: #5b21b6; }
 
-        /* ── Verdict ── */
-        .rc-verdict-grid {
-          display: flex;
-          align-items: center;
-          gap: 28px;
-          flex-wrap: wrap;
-        }
-        .rc-verdict-pill {
-          padding: 16px 40px;
-          border-radius: 14px;
-          font-size: 22px;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-          border: 1.5px solid;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-shrink: 0;
-        }
-        .rc-verdict-icon {
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 14px;
-          font-weight: 900;
-          border: 2px solid;
-        }
+        /* Verdict */
+        .rc-verdict-grid { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+        .rc-verdict-pill { padding: 16px 40px; border-radius: 14px; font-size: 22px; font-weight: 900; letter-spacing: 0.08em; border: 1.5px solid; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .rc-verdict-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; border: 2px solid; }
         .rc-confidence-side { flex: 1; min-width: 180px; }
         .rc-conf-label { display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px; font-weight: 500; }
         .rc-conf-bar { height: 6px; background: rgba(99,102,241,0.1); border-radius: 100px; overflow: hidden; }
         .rc-conf-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
 
-        /* Reasoning toggle */
-        .rc-reasoning-btn {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          width: 100%;
-          background: rgba(99,102,241,0.04);
-          border: 1px solid rgba(99,102,241,0.12);
-          border-radius: 10px;
-          cursor: pointer;
-          padding: 12px 16px;
-          font-family: inherit;
-          margin-top: 20px;
-          transition: background 0.15s ease;
-        }
+        .rc-reasoning-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; background: rgba(99,102,241,0.04); border: 1px solid rgba(99,102,241,0.12); border-radius: 10px; cursor: pointer; padding: 12px 16px; font-family: inherit; margin-top: 20px; transition: background 0.15s ease; }
         .rc-reasoning-btn:hover { background: rgba(99,102,241,0.07); }
         .rc-reasoning-label { font-size: 13px; font-weight: 700; color: #6366f1; display: flex; align-items: center; gap: 6px; }
         .rc-reasoning-text { padding-top: 16px; font-size: 14px; color: #475569; line-height: 1.8; }
 
-        /* ── Metrics grid ── */
-        .rc-km-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-          gap: 10px;
-        }
-        .rc-km-card {
-          background: linear-gradient(135deg, #f8faff 0%, #f5f3ff 100%);
-          border: 1px solid rgba(99,102,241,0.1);
-          border-radius: 12px;
-          padding: 14px;
-          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-        .rc-km-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 6px 18px rgba(99,102,241,0.12);
-          border-color: rgba(99,102,241,0.2);
-        }
-        .rc-km-label {
-          font-size: 10.5px;
-          color: #6b7280;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          margin-bottom: 8px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          font-weight: 600;
-        }
-        .rc-km-value { font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
+        /* Metrics grid */
+        .rc-km-group { margin-bottom: 20px; }
+        .rc-km-group:last-child { margin-bottom: 0; }
+        .rc-km-group-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; }
+        .rc-km-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+        .rc-km-card { background: linear-gradient(135deg, #f8faff 0%, #f5f3ff 100%); border: 1px solid rgba(99,102,241,0.1); border-radius: 12px; padding: 12px 14px; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .rc-km-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.2); }
+        .rc-km-label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; font-weight: 600; }
+        .rc-km-value { font-size: 17px; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
         .rc-km-icon { flex-shrink: 0; }
 
-        /* ── Bull / Bear ── */
-        .rc-bb-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
+        /* Bull / Bear */
+        .rc-bb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 640px) { .rc-bb-grid { grid-template-columns: 1fr; } }
-
         .rc-bb-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-        .rc-bb-item {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          padding: 11px 14px;
-          border-radius: 10px;
-          font-size: 13.5px;
-          color: #334155;
-          line-height: 1.55;
-          animation: rcFadeUp 0.4s ease both;
-          border: 1px solid;
-          transition: transform 0.15s ease;
-        }
+        .rc-bb-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; border-radius: 10px; font-size: 13.5px; color: #334155; line-height: 1.55; animation: rcFadeUp 0.4s ease both; border: 1px solid; transition: transform 0.15s ease; }
         .rc-bb-item:hover { transform: translateX(2px); }
-        .rc-bb-item:nth-child(1){animation-delay:.05s} .rc-bb-item:nth-child(2){animation-delay:.10s}
-        .rc-bb-item:nth-child(3){animation-delay:.15s} .rc-bb-item:nth-child(4){animation-delay:.20s}
-        .rc-bb-item:nth-child(5){animation-delay:.25s}
         .rc-bull-item { background: #f0fdf4; border-color: #bbf7d0; }
         .rc-bear-item { background: #fef2f2; border-color: #fecaca; }
         .rc-bull-dot { color: #059669; font-weight: 900; flex-shrink: 0; font-size: 14px; }
         .rc-bear-dot { color: #dc2626; font-weight: 900; flex-shrink: 0; font-size: 14px; }
 
-        /* ── Tables ── */
+        /* Tables */
         .rc-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(15,23,42,0.07); }
         .rc-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
         .rc-th { padding: 10px 14px; text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
@@ -471,30 +526,101 @@ export default function ResultCard({ data }) {
         .rc-td-year { font-weight: 800; color: #0f172a; font-family: 'Courier New', monospace; letter-spacing: 0.03em; }
         .rc-positive { color: #059669; font-weight: 700; }
         .rc-negative { color: #dc2626; font-weight: 700; }
+        .rc-src-fmp   { color: #1d4ed8; font-weight: 700; }
+        .rc-src-yahoo { color: #92400e; font-weight: 700; }
 
-        /* ── News ── */
+        /* Cross-source diff colors */
+        .rc-diff-low  { color: #059669; font-weight: 700; }
+        .rc-diff-mid  { color: #d97706; font-weight: 700; }
+        .rc-diff-high { color: #dc2626; font-weight: 700; }
+
+        /* News */
         .rc-news-list { display: flex; flex-direction: column; gap: 10px; }
-        .rc-news-item {
-          padding: 16px;
-          background: #f8fafc;
-          border: 1px solid rgba(15,23,42,0.07);
-          border-radius: 12px;
-          transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-          cursor: default;
-        }
-        .rc-news-item:hover {
-          border-color: rgba(99,102,241,0.2);
-          box-shadow: 0 2px 12px rgba(99,102,241,0.08);
-          transform: translateY(-1px);
-        }
+        .rc-news-item { padding: 16px; background: #f8fafc; border: 1px solid rgba(15,23,42,0.07); border-radius: 12px; transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; cursor: default; }
+        .rc-news-item:hover { border-color: rgba(99,102,241,0.2); box-shadow: 0 2px 12px rgba(99,102,241,0.08); transform: translateY(-1px); }
         .rc-news-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
         .rc-news-title { font-size: 13.5px; font-weight: 700; color: #0f172a; line-height: 1.4; }
         .rc-news-source { font-size: 10px; font-weight: 800; padding: 2px 9px; background: #ede9fe; color: #5b21b6; border-radius: 100px; white-space: nowrap; flex-shrink: 0; letter-spacing: 0.03em; }
         .rc-news-summary { font-size: 13px; color: #475569; line-height: 1.6; }
         .rc-news-date { font-size: 11px; color: #94a3b8; margin-top: 8px; font-weight: 500; }
 
-        /* ── Header layout ── */
+        /* Reanalyze button */
+        .rc-reanalyze-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; border-radius: 10px; font-size: 12.5px; font-weight: 700; cursor: pointer; letter-spacing: 0.02em; transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease; box-shadow: 0 2px 10px rgba(99,102,241,0.28); white-space: nowrap; flex-shrink: 0; }
+        .rc-reanalyze-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,0.38); }
+        .rc-reanalyze-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .rc-reanalyze-spinner { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: rcSpin 0.7s linear infinite; }
+        @keyframes rcSpin { to { transform: rotate(360deg); } }
+
         .rc-header-flex { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+
+        /* Yahoo: Analyst Consensus */
+        .rc-analyst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        .rc-analyst-card { background: #f8fafc; border: 1px solid rgba(15,23,42,0.08); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+        .rc-analyst-label { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+        .rc-analyst-value { font-size: 18px; font-weight: 900; color: #0f172a; letter-spacing: -0.02em; }
+        .rc-analyst-sub { font-size: 11px; color: #64748b; }
+
+        /* Rec pill */
+        .rc-rec-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: 12px; font-size: 18px; font-weight: 900; border: 1.5px solid; letter-spacing: 0.05em; }
+
+        /* Stacked bar */
+        .rc-rec-bar-wrap { margin-top: 16px; }
+        .rc-rec-stacked { height: 18px; border-radius: 6px; overflow: hidden; display: flex; background: #f1f5f9; }
+        .rc-rec-legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 10px; }
+        .rc-rec-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #64748b; }
+
+        /* Price target */
+        .rc-target-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px 18px; background: linear-gradient(135deg, #f0f9ff, #eff6ff); border: 1px solid #bfdbfe; border-radius: 12px; flex-wrap: wrap; gap: 20px; }
+        .rc-target-item { text-align: center; }
+        .rc-target-label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+        .rc-target-val { font-size: 20px; font-weight: 900; color: #1d4ed8; margin-top: 2px; }
+        .rc-target-val-low  { font-size: 20px; font-weight: 900; color: #dc2626; margin-top: 2px; }
+        .rc-target-val-high { font-size: 20px; font-weight: 900; color: #059669; margin-top: 2px; }
+        .rc-target-divider { width: 1px; height: 40px; background: rgba(15,23,42,0.1); }
+
+        /* Earnings beats */
+        .rc-earnings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 4px; }
+        .rc-earnings-card { border-radius: 12px; padding: 14px; border: 1px solid; text-align: center; }
+        .rc-earnings-date { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; }
+        .rc-earnings-actual { font-size: 20px; font-weight: 900; margin: 4px 0; }
+        .rc-earnings-est  { font-size: 11.5px; opacity: 0.7; }
+        .rc-earnings-surp { font-size: 13px; font-weight: 800; margin-top: 6px; }
+
+        /* Ownership */
+        .rc-ownership-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .rc-ownership-card { padding: 16px; background: #fafafa; border: 1px solid rgba(15,23,42,0.07); border-radius: 14px; }
+        .rc-ownership-label { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+        .rc-ownership-val { font-size: 22px; font-weight: 900; color: #0f172a; margin-top: 4px; }
+        .rc-ownership-bar { height: 6px; background: rgba(99,102,241,0.1); border-radius: 100px; margin-top: 8px; overflow: hidden; }
+        .rc-ownership-fill { height: 100%; border-radius: 100px; }
+
+        /* Upgrades / Downgrades */
+        .rc-action-list { display: flex; flex-direction: column; gap: 8px; }
+        .rc-action-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; font-size: 13px; border: 1px solid; }
+        .rc-action-up   { background: #f0fdf4; border-color: #bbf7d0; }
+        .rc-action-down { background: #fef2f2; border-color: #fecaca; }
+        .rc-action-reit { background: #f8fafc; border-color: #e2e8f0; }
+        .rc-action-init { background: #eff6ff; border-color: #bfdbfe; }
+        .rc-action-firm { font-weight: 700; color: #0f172a; min-width: 140px; }
+        .rc-action-grade { font-size: 12px; color: #64748b; }
+
+        /* EPS estimates */
+        .rc-eps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .rc-eps-card { padding: 16px; background: #f8fafc; border: 1px solid rgba(15,23,42,0.07); border-radius: 14px; }
+        .rc-eps-period { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #6366f1; margin-bottom: 10px; }
+        .rc-eps-row { display: flex; justify-content: space-between; font-size: 12.5px; color: #334155; margin: 4px 0; }
+        .rc-eps-key { color: #94a3b8; font-weight: 600; }
+        .rc-eps-val { font-weight: 700; color: #0f172a; }
+
+        /* Yahoo key stats */
+        .rc-yf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+        .rc-yf-card { background: linear-gradient(135deg, #fffbeb 0%, #fef9c3 100%); border: 1px solid #fde68a; border-radius: 12px; padding: 12px 14px; }
+        .rc-yf-label { font-size: 10px; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 700; }
+        .rc-yf-value { font-size: 17px; font-weight: 800; color: #78350f; }
+
+        /* Two-col layout */
+        .rc-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 640px) { .rc-two-col { grid-template-columns: 1fr; } }
       `}</style>
 
       <div className="rc-dashboard">
@@ -504,7 +630,6 @@ export default function ResultCard({ data }) {
         ════════════════════════════════════════ */}
         <Card>
           <div className="rc-header-flex">
-            {/* Left: name + badges */}
             <div style={{ flex: 1, minWidth: 240 }}>
               <h2 className="rc-company-name">{data.companyName}</h2>
               <div className="rc-badges">
@@ -520,21 +645,33 @@ export default function ResultCard({ data }) {
               </div>
             </div>
 
-            {/* Right: live price */}
-            {profile.price != null && (
-              <div className="rc-price-block">
-                <div className="rc-price">${fmtNum(profile.price)}</div>
-                <div className="rc-beta">β {fmtNum(profile.beta)}</div>
-              </div>
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
+              {profile.price != null && (
+                <div className="rc-price-block">
+                  <div className="rc-price">${fmtNum(profile.price)}</div>
+                  <div className="rc-beta">β {fmtNum(profile.beta)}</div>
+                </div>
+              )}
+              {yfc.currentPrice && !profile.price && (
+                <div className="rc-price-block">
+                  <div className="rc-price">${fmtNum(yfc.currentPrice)}</div>
+                  <SourceBadge src="yahoo" />
+                </div>
+              )}
+              {onReanalyze && (
+                <button id="reanalyze-btn" className="rc-reanalyze-btn" onClick={handleReanalyze} disabled={reanalyzing}>
+                  {reanalyzing ? <><span className="rc-reanalyze-spinner" /> Reanalyzing…</> : <>🔄 Reanalyze &amp; Save</>}
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Profile meta-stats */}
           <div className="rc-stats-grid">
             {profile.ceo       && <StatItem icon={<Building2 size={13}/>} label="CEO"       value={profile.ceo} />}
             {profile.employees && <StatItem icon={<Users size={13}/>}     label="Employees" value={fmtLargeNum(profile.employees)} />}
             {profile.country   && <StatItem icon={<Globe size={13}/>}     label="Country"   value={profile.country} />}
             {profile.ipoDate   && <StatItem icon={<Calendar size={13}/>}  label="IPO Date"  value={profile.ipoDate} />}
+            {profile.marketCap && <StatItem icon={<DollarSign size={13}/>}label="Market Cap" value={fmtCurrency(profile.marketCap)} />}
             {profile.website   && <StatItem icon={<ExternalLink size={13}/>} label="Website" value="Visit site" href={profile.website} />}
           </div>
 
@@ -556,15 +693,12 @@ export default function ResultCard({ data }) {
         <Card>
           <SectionHeader icon={<Activity size={13}/>} title="Investment Verdict" accent="#6366f1" />
           <div className="rc-verdict-grid">
-            {/* Verdict pill */}
             <div className="rc-verdict-pill" style={{ background: vc.bg, borderColor: vc.border, color: vc.color, boxShadow: `0 6px 24px ${vc.glow}` }}>
               <div className="rc-verdict-icon" style={{ background: `${vc.color}15`, borderColor: vc.border, color: vc.color }}>
                 {vc.icon}
               </div>
               {vc.label}
             </div>
-
-            {/* Confidence bar */}
             <div className="rc-confidence-side">
               <div className="rc-conf-label">
                 <span>AI Confidence</span>
@@ -574,45 +708,303 @@ export default function ResultCard({ data }) {
                 <div className="rc-conf-fill" style={{ width: `${data.confidence}%` }} />
               </div>
             </div>
-
-            {/* Ring */}
             <ConfidenceRing confidence={data.confidence} />
           </div>
 
-          {/* Investment reasoning (collapsible) */}
-          {data.investmentReasoning && (
+          {data.reasoning && (
             <button className="rc-reasoning-btn" onClick={() => setReasoningOpen(!reasoningOpen)}>
-              <span className="rc-reasoning-label">
-                <Activity size={13}/> AI Reasoning
-              </span>
+              <span className="rc-reasoning-label"><Activity size={13}/> AI Reasoning</span>
               {reasoningOpen ? <ChevronUp size={15} color="#6366f1"/> : <ChevronDown size={15} color="#6366f1"/>}
             </button>
           )}
-          {reasoningOpen && (
-            <div className="rc-reasoning-text">{data.investmentReasoning}</div>
-          )}
+          {reasoningOpen && <div className="rc-reasoning-text">{data.reasoning}</div>}
         </Card>
 
         {/* ════════════════════════════════════════
-            3. KEY METRICS (10 cards)
+            3. ANALYST CONSENSUS (Yahoo)
+        ════════════════════════════════════════ */}
+        {yf && (
+          <Card>
+            <SectionHeader icon={<Target size={13}/>} title="Analyst Consensus" accent="#f59e0b" src="yahoo" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+              {yfc.recommendationKey && (
+                <div className="rc-rec-pill" style={{ background: recCfg.bg, color: recCfg.color, borderColor: recCfg.color + '40' }}>
+                  <Award size={18}/> {recCfg.label}
+                </div>
+              )}
+              {yfc.recommendationMean && (
+                <div style={{ fontSize: 13, color: '#64748b' }}>
+                  Score: <strong style={{ color: '#0f172a' }}>{fmtNum(yfc.recommendationMean, 2)}</strong>
+                  <span style={{ fontSize: 11, marginLeft: 6 }}>(1 = Strong Buy, 5 = Sell)</span>
+                </div>
+              )}
+              {yfc.numberOfAnalystOpinions && (
+                <div style={{ fontSize: 13, color: '#64748b' }}>
+                  Based on <strong style={{ color: '#0f172a' }}>{yfc.numberOfAnalystOpinions}</strong> analysts
+                </div>
+              )}
+            </div>
+
+            {/* Price targets */}
+            {yfc.targetMeanPrice && (
+              <div className="rc-target-row">
+                <div className="rc-target-item">
+                  <div className="rc-target-label">Low Target</div>
+                  <div className="rc-target-val-low">${fmtNum(yfc.targetLowPrice)}</div>
+                </div>
+                <div className="rc-target-divider" />
+                <div className="rc-target-item">
+                  <div className="rc-target-label">Mean Target</div>
+                  <div className="rc-target-val">${fmtNum(yfc.targetMeanPrice)}</div>
+                </div>
+                <div className="rc-target-divider" />
+                <div className="rc-target-item">
+                  <div className="rc-target-label">Median Target</div>
+                  <div className="rc-target-val">${fmtNum(yfc.targetMedianPrice)}</div>
+                </div>
+                <div className="rc-target-divider" />
+                <div className="rc-target-item">
+                  <div className="rc-target-label">High Target</div>
+                  <div className="rc-target-val-high">${fmtNum(yfc.targetHighPrice)}</div>
+                </div>
+                {profile.price && yfc.targetMeanPrice && (
+                  <>
+                    <div className="rc-target-divider" />
+                    <div className="rc-target-item">
+                      <div className="rc-target-label">Upside (Mean)</div>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: yfc.targetMeanPrice > profile.price ? '#059669' : '#dc2626', marginTop: 2 }}>
+                        {((yfc.targetMeanPrice - profile.price) / profile.price * 100).toFixed(1)}%
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Buy/Hold/Sell stacked bar */}
+            {recNow && (
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                  This Month's Analyst Ratings
+                </div>
+                <RecBar
+                  strongBuy={recNow.strongBuy}
+                  buy={recNow.buy}
+                  hold={recNow.hold}
+                  sell={recNow.sell}
+                  strongSell={recNow.strongSell}
+                />
+              </div>
+            )}
+            {recPrev && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                  Previous Month
+                </div>
+                <RecBar
+                  strongBuy={recPrev.strongBuy}
+                  buy={recPrev.buy}
+                  hold={recPrev.hold}
+                  sell={recPrev.sell}
+                  strongSell={recPrev.strongSell}
+                />
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            4. ANALYST UPGRADES / DOWNGRADES (Yahoo)
+        ════════════════════════════════════════ */}
+        {yf?.analystActions?.length > 0 && (
+          <Card>
+            <SectionHeader icon={<ArrowUpRight size={13}/>} title="Recent Analyst Actions" accent="#7c3aed" src="yahoo" />
+            <div className="rc-action-list">
+              {yf.analystActions.map((a, i) => {
+                const cls = a.action === 'up' ? 'rc-action-up' : a.action === 'down' ? 'rc-action-down' : a.action === 'init' ? 'rc-action-init' : 'rc-action-reit';
+                return (
+                  <div key={i} className={`rc-action-item ${cls}`}>
+                    <div style={{ fontSize: 13, width: 110, flexShrink: 0 }}>{actionLabel(a.action)}</div>
+                    <div className="rc-action-firm">{a.firm}</div>
+                    <div className="rc-action-grade">
+                      {a.fromGrade && a.toGrade && a.fromGrade !== a.toGrade
+                        ? <>{a.fromGrade} → <strong>{a.toGrade}</strong></>
+                        : <strong>{a.toGrade || a.fromGrade}</strong>}
+                    </div>
+                    <div style={{ marginLeft: 'auto', fontSize: 11, color: '#94a3b8' }}>
+                      {a.date ? new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            5. QUARTERLY EARNINGS BEATS/MISSES (Yahoo)
+        ════════════════════════════════════════ */}
+        {yf?.earningsHistory?.length > 0 && (
+          <Card>
+            <SectionHeader icon={<BarChart3 size={13}/>} title="Quarterly Earnings — Actual vs. Estimate" accent="#059669" src="yahoo" />
+            <div className="rc-earnings-grid">
+              {yf.earningsHistory.map((q, i) => {
+                const beat = q.surprise > 0;
+                return (
+                  <div key={i} className="rc-earnings-card"
+                    style={{ background: beat ? '#f0fdf4' : '#fef2f2', borderColor: beat ? '#bbf7d0' : '#fecaca' }}>
+                    <div className="rc-earnings-date">{q.date}</div>
+                    <div className="rc-earnings-actual" style={{ color: beat ? '#059669' : '#dc2626' }}>
+                      ${fmtNum(q.actual)}
+                    </div>
+                    <div className="rc-earnings-est">Est: ${fmtNum(q.estimate)}</div>
+                    {q.surprise != null && (
+                      <div className="rc-earnings-surp" style={{ color: beat ? '#059669' : '#dc2626' }}>
+                        {beat ? '▲' : '▼'} {Math.abs(q.surprise).toFixed(2)}% {beat ? 'beat' : 'miss'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            6. EPS & REVENUE ESTIMATES (Yahoo)
+        ════════════════════════════════════════ */}
+        {yf?.epsEstimates?.length > 0 && (
+          <Card>
+            <SectionHeader icon={<Eye size={13}/>} title="EPS & Revenue Estimates" accent="#0891b2" src="yahoo" />
+            <div className="rc-eps-grid">
+              {yf.epsEstimates.map((e, i) => {
+                const periodLabel = { '0q': 'Current Quarter', '+1q': 'Next Quarter', '0y': 'Current Year', '+1y': 'Next Year' }[e.period] ?? e.period;
+                return (
+                  <div key={i} className="rc-eps-card">
+                    <div className="rc-eps-period">{periodLabel}</div>
+                    <div className="rc-eps-row"><span className="rc-eps-key">EPS Estimate</span><span className="rc-eps-val">${fmtNum(e.epsAvg)}</span></div>
+                    <div className="rc-eps-row"><span className="rc-eps-key">EPS Range</span><span className="rc-eps-val">${fmtNum(e.epsLow)} – ${fmtNum(e.epsHigh)}</span></div>
+                    <div className="rc-eps-row"><span className="rc-eps-key">Year-Ago EPS</span><span className="rc-eps-val">${fmtNum(e.yearAgoEps)}</span></div>
+                    {e.revAvg && <div className="rc-eps-row"><span className="rc-eps-key">Rev. Estimate</span><span className="rc-eps-val">{fmtCurrency(e.revAvg)}</span></div>}
+                    {e.growth != null && <div className="rc-eps-row"><span className="rc-eps-key">Growth Est.</span><span className="rc-eps-val" style={{ color: e.growth > 0 ? '#059669' : '#dc2626' }}>{fmtPctRaw(e.growth)}</span></div>}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            7. OWNERSHIP (Yahoo)
+        ════════════════════════════════════════ */}
+        {yf?.ownership && (
+          <Card>
+            <SectionHeader icon={<Users size={13}/>} title="Institutional & Insider Ownership" accent="#7c3aed" src="yahoo" />
+            <div className="rc-ownership-grid">
+              {[
+                { label: 'Institutional Ownership', val: yf.ownership.institutionsPercent, color: '#6366f1' },
+                { label: 'Insider Ownership',       val: yf.ownership.insidersPercent,     color: '#059669' },
+                { label: 'Inst. Float Held',        val: yf.ownership.institutionsFloatPercent, color: '#7c3aed' },
+              ].map((item, i) => (
+                <div key={i} className="rc-ownership-card">
+                  <div className="rc-ownership-label">{item.label}</div>
+                  <div className="rc-ownership-val">{item.val != null ? fmtPctRaw(item.val) : 'N/A'}</div>
+                  {item.val != null && (
+                    <div className="rc-ownership-bar">
+                      <div className="rc-ownership-fill" style={{ width: `${Math.min(item.val * 100, 100)}%`, background: item.color }} />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {yf.ownership.institutionsCount && (
+                <div className="rc-ownership-card">
+                  <div className="rc-ownership-label">Total Institutions</div>
+                  <div className="rc-ownership-val">{yf.ownership.institutionsCount.toLocaleString()}</div>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            8. YAHOO KEY STATISTICS
+        ════════════════════════════════════════ */}
+        {yf && (
+          <Card>
+            <SectionHeader icon={<BarChart3 size={13}/>} title="Key Statistics" accent="#d97706" src="yahoo" />
+            <div className="rc-yf-grid">
+              {[
+                { label: 'Forward P/E',      value: fmtNum(yfk.forwardPE) },
+                { label: 'PEG Ratio',        value: fmtNum(yfk.pegRatio) },
+                { label: 'Price/Book',       value: fmtNum(yfk.priceToBook) },
+                { label: 'Price/Sales',      value: fmtNum(yfk.priceToSales) },
+                { label: 'EV/Revenue',       value: fmtNum(yfk.enterpriseToRevenue) },
+                { label: 'EV/EBITDA',        value: fmtNum(yfk.enterpriseToEbitda) },
+                { label: 'Beta',             value: fmtNum(yfk.beta) },
+                { label: 'EPS (Trail.)',     value: `$${fmtNum(yfk.trailingEps)}` },
+                { label: 'EPS (Fwd)',        value: `$${fmtNum(yfk.forwardEps)}` },
+                { label: 'Shares Out.',      value: fmtLargeNum(yfk.sharesOutstanding) },
+                { label: 'Short % Float',    value: yfk.shortPercentOfFloat != null ? fmtPctRaw(yfk.shortPercentOfFloat) : 'N/A' },
+                { label: '52W Change',       value: yfk.weekChange52 != null ? fmtPctRaw(yfk.weekChange52) : 'N/A' },
+                { label: 'Revenue Growth',   value: yfc.revenueGrowth != null ? fmtPctRaw(yfc.revenueGrowth) : 'N/A' },
+                { label: 'Earnings Growth',  value: yfc.earningsGrowth != null ? fmtPctRaw(yfc.earningsGrowth) : 'N/A' },
+                { label: 'EBITDA Margin',    value: yfc.ebitdaMargins != null ? fmtPctRaw(yfc.ebitdaMargins) : 'N/A' },
+                { label: 'Free Cash Flow',   value: fmtCurrency(yfc.freeCashflow) },
+              ].filter(c => c.value !== 'N/A' && c.value !== '$N/A').map((card, i) => (
+                <div key={i} className="rc-yf-card">
+                  <div className="rc-yf-label">{card.label}</div>
+                  <div className="rc-yf-value">{card.value}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            9. CROSS-SOURCE COMPARISON
+        ════════════════════════════════════════ */}
+        {yf && comparisonRows.length > 0 && (
+          <Card>
+            <SectionHeader icon={<GitCompare size={13}/>} title="Cross-Source Data Comparison" accent="#7c3aed" src="both" />
+            <p style={{ fontSize: 12.5, color: '#64748b', margin: '0 0 16px', lineHeight: 1.6 }}>
+              Same metrics reported by both FMP and Yahoo Finance. Differences &gt;15% are highlighted in red — these may reflect timing differences or methodology.
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}>🟢 &lt;5% diff</span>
+              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#fef9c3', color: '#92400e', border: '1px solid #fde68a' }}>🟡 5–15% diff</span>
+              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>🔴 &gt;15% diff</span>
+            </div>
+            <ComparisonTable rows={comparisonRows} />
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            10. KEY METRICS (FMP)
         ════════════════════════════════════════ */}
         <Card>
-          <SectionHeader icon={<BarChart3 size={13}/>} title="Key Metrics & Ratios" accent="#6366f1" />
-          <div className="rc-km-grid">
-            {kmCards.map((m, i) => (
-              <div key={i} className="rc-km-card">
-                <div className="rc-km-label">
-                  <span className="rc-km-icon" style={{ color: m.accent }}>{m.icon}</span>
-                  {m.label}
-                </div>
-                <div className="rc-km-value">{m.value}</div>
+          <SectionHeader icon={<BarChart3 size={13}/>} title="Key Metrics & Ratios" accent="#6366f1" src="fmp" />
+          {kmGroups.map((group, gi) => (
+            <div key={gi} className="rc-km-group">
+              <div className="rc-km-group-title" style={{ color: group.accent, background: `${group.accent}12`, border: `1px solid ${group.accent}25` }}>
+                {group.title}
               </div>
-            ))}
-          </div>
+              <div className="rc-km-grid">
+                {group.cards.map((m, i) => (
+                  <div key={i} className="rc-km-card">
+                    <div className="rc-km-label">
+                      <span className="rc-km-icon" style={{ color: m.accent }}>{m.icon}</span>
+                      {m.label}
+                    </div>
+                    <div className="rc-km-value">{m.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </Card>
 
         {/* ════════════════════════════════════════
-            4. BULL / BEAR
+            11. BULL / BEAR
         ════════════════════════════════════════ */}
         <div className="rc-bb-grid">
           <Card>
@@ -638,11 +1030,11 @@ export default function ResultCard({ data }) {
         </div>
 
         {/* ════════════════════════════════════════
-            5. INCOME STATEMENT
+            12. INCOME STATEMENT (FMP)
         ════════════════════════════════════════ */}
         {income.length > 0 && (
           <Card>
-            <SectionHeader icon={<DollarSign size={13}/>} title="Income Statement (3-Year)" accent="#6366f1" />
+            <SectionHeader icon={<DollarSign size={13}/>} title="Income Statement (3-Year)" accent="#6366f1" src="fmp" />
             <DataTable
               accentColor="#6366f1"
               headers={['Year','Revenue','Gross Profit','Gross Margin','Op. Income','Op. Margin','Net Income','Net Margin','EPS','EBITDA']}
@@ -652,11 +1044,11 @@ export default function ResultCard({ data }) {
         )}
 
         {/* ════════════════════════════════════════
-            6. BALANCE SHEET
+            13. BALANCE SHEET (FMP)
         ════════════════════════════════════════ */}
         {balance.length > 0 && (
           <Card>
-            <SectionHeader icon={<Building2 size={13}/>} title="Balance Sheet (3-Year)" accent="#7c3aed" />
+            <SectionHeader icon={<Building2 size={13}/>} title="Balance Sheet (3-Year)" accent="#7c3aed" src="fmp" />
             <DataTable
               accentColor="#7c3aed"
               headers={['Year','Cash','Total Assets','Total Debt','Total Liabilities','Total Equity','Current Ratio']}
@@ -666,11 +1058,11 @@ export default function ResultCard({ data }) {
         )}
 
         {/* ════════════════════════════════════════
-            7. CASH FLOW
+            14. CASH FLOW (FMP)
         ════════════════════════════════════════ */}
         {cashflow.length > 0 && (
           <Card>
-            <SectionHeader icon={<Activity size={13}/>} title="Cash Flow Statement (3-Year)" accent="#0891b2" />
+            <SectionHeader icon={<Activity size={13}/>} title="Cash Flow Statement (3-Year)" accent="#0891b2" src="fmp" />
             <DataTable
               accentColor="#0891b2"
               headers={['Year','Operating Cash Flow','Capital Expenditure','Free Cash Flow','Dividends Paid']}
@@ -680,11 +1072,11 @@ export default function ResultCard({ data }) {
         )}
 
         {/* ════════════════════════════════════════
-            8. RECENT NEWS
+            15. RECENT NEWS (FMP)
         ════════════════════════════════════════ */}
         {news.length > 0 && (
           <Card>
-            <SectionHeader icon={<Newspaper size={13}/>} title="Recent News" accent="#d97706" />
+            <SectionHeader icon={<Newspaper size={13}/>} title="Recent News" accent="#d97706" src="fmp" />
             <div className="rc-news-list">
               {news.map((item, i) => (
                 <div key={i} className="rc-news-item">
