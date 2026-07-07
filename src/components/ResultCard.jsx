@@ -39,9 +39,11 @@ const VERDICT_CFG = {
 
 /* Source badge configs */
 const SRC = {
-  fmp:   { label: 'FMP',   bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' },
-  yahoo: { label: 'Yahoo', bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
+  fmp:   { label: 'FMP',         bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' },
+  yahoo: { label: 'Yahoo',       bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
+  edgar: { label: 'SEC EDGAR',   bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
   both:  { label: 'FMP + Yahoo', bg: '#f3e8ff', color: '#6b21a8', border: '#d8b4fe' },
+  all3:  { label: 'FMP + Yahoo + SEC', bg: '#f0fdf4', color: '#065f46', border: '#6ee7b7' },
 };
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -49,9 +51,10 @@ const SRC = {
 ───────────────────────────────────────────────────────────────────────────── */
 function SourceBadge({ src = 'fmp' }) {
   const cfg = SRC[src] ?? SRC.fmp;
+  const emoji = src === 'fmp' ? '🔵' : src === 'yahoo' ? '🟡' : src === 'edgar' ? '🟢' : src === 'all3' ? '🔵🟡🟢' : '🔵🟡';
   return (
     <span className="rc-src-badge" style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}>
-      {src === 'fmp' ? '🔵' : src === 'both' ? '🔵🟡' : '🟡'} {cfg.label}
+      {emoji} {cfg.label}
     </span>
   );
 }
@@ -170,27 +173,25 @@ function DataTable({ headers, rows, accentColor = '#6366f1' }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Cross-Source Comparison Table
+   Cross-Source Comparison Table (3 sources)
 ───────────────────────────────────────────────────────────────────────────── */
 function ComparisonTable({ rows }) {
-  // rows: [{ metric, fmp, yahoo, fmpRaw, yahooRaw }]
-  const getDiffClass = (a, b) => {
-    if (a === 'N/A' || b === 'N/A') return '';
-    const numA = parseFloat(String(a).replace(/[^0-9.-]/g, ''));
-    const numB = parseFloat(String(b).replace(/[^0-9.-]/g, ''));
-    if (isNaN(numA) || isNaN(numB) || numA === 0) return '';
-    const diff = Math.abs((numA - numB) / Math.abs(numA)) * 100;
-    if (diff < 5) return 'rc-diff-low';
-    if (diff < 15) return 'rc-diff-mid';
-    return 'rc-diff-high';
-  };
-
-  const getDiffLabel = (a, b) => {
-    const numA = parseFloat(String(a).replace(/[^0-9.-]/g, ''));
-    const numB = parseFloat(String(b).replace(/[^0-9.-]/g, ''));
-    if (isNaN(numA) || isNaN(numB) || a === 'N/A' || b === 'N/A') return '—';
-    const diff = ((numB - numA) / Math.abs(numA)) * 100;
-    return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`;
+  // rows: [{ label, fmpFmt, yahooFmt, edgarFmt, agreement }]
+  const agreementBadge = (level) => {
+    if (!level || level === 'SINGLE') return null;
+    const cfg = {
+      HIGH:   { bg: '#dcfce7', color: '#166534', border: '#bbf7d0', icon: '✅', text: 'HIGH' },
+      MEDIUM: { bg: '#fef9c3', color: '#92400e', border: '#fde68a', icon: '⚠️', text: 'MED' },
+      LOW:    { bg: '#fef2f2', color: '#991b1b', border: '#fecaca', icon: '🔴', text: 'LOW' },
+    }[level] ?? null;
+    if (!cfg) return null;
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 3,
+        padding: '1px 8px', borderRadius: 100, fontSize: 10, fontWeight: 800,
+        background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`,
+      }}>{cfg.icon} {cfg.text}</span>
+    );
   };
 
   return (
@@ -200,23 +201,21 @@ function ComparisonTable({ rows }) {
           <tr style={{ background: '#7c3aed0d' }}>
             <th className="rc-th" style={{ color: '#7c3aed' }}>Metric</th>
             <th className="rc-th" style={{ color: '#1d4ed8' }}>🔵 FMP</th>
-            <th className="rc-th" style={{ color: '#92400e' }}>🟡 Yahoo Finance</th>
-            <th className="rc-th" style={{ color: '#7c3aed' }}>Difference</th>
+            <th className="rc-th" style={{ color: '#92400e' }}>🟡 Yahoo</th>
+            <th className="rc-th" style={{ color: '#166534' }}>🟢 SEC EDGAR</th>
+            <th className="rc-th" style={{ color: '#7c3aed' }}>Agreement</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => {
-            const cls = getDiffClass(row.fmp, row.yahoo);
-            const diffLabel = getDiffLabel(row.fmp, row.yahoo);
-            return (
-              <tr key={i} className="rc-tr">
-                <td className="rc-td" style={{ fontWeight: 700, color: '#334155' }}>{row.metric}</td>
-                <td className="rc-td rc-src-fmp">{row.fmp}</td>
-                <td className="rc-td rc-src-yahoo">{row.yahoo}</td>
-                <td className={`rc-td ${cls}`}>{diffLabel}</td>
-              </tr>
-            );
-          })}
+          {rows.map((row, i) => (
+            <tr key={i} className="rc-tr">
+              <td className="rc-td" style={{ fontWeight: 700, color: '#334155' }}>{row.label}</td>
+              <td className="rc-td rc-src-fmp">{row.fmpFmt}</td>
+              <td className="rc-td rc-src-yahoo">{row.yahooFmt}</td>
+              <td className="rc-td rc-src-edgar">{row.edgarFmt}</td>
+              <td className="rc-td">{agreementBadge(row.agreement)}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
@@ -279,6 +278,8 @@ export default function ResultCard({ data, onReanalyze }) {
   const news    = raw.recentNews      ?? [];
   const peers   = raw.peers           ?? [];
   const yf      = raw.yahooData       ?? null;   // Yahoo Finance data
+  const edgar   = raw.edgarData       ?? null;   // SEC EDGAR data
+  const cs      = raw.crossSource     ?? {};     // Cross-source comparison
 
   /* ── FMP Table rows ── */
   const incomeRows = income.map((d) => [
@@ -375,27 +376,32 @@ export default function ResultCard({ data, onReanalyze }) {
     },
   ];
 
-  /* ── Cross-Source Comparison rows ── */
+  /* ── Cross-Source Comparison rows (from server-computed crossSource object) ── */
   const yfc = yf?.currentFinancials ?? {};
   const yfk = yf?.keyStats ?? {};
-  const comparisonRows = [
-    { metric: 'P/E Ratio (Trailing)',  fmp: fmtNum(km.peRatio),          yahoo: fmtNum(yfk.trailingEps && yfc.currentPrice ? yfc.currentPrice / yfk.trailingEps : null) },
-    { metric: 'Forward P/E',          fmp: 'N/A',                        yahoo: fmtNum(yfk.forwardPE) },
-    { metric: 'P/B Ratio',            fmp: fmtNum(km.pbRatio),           yahoo: fmtNum(yfk.priceToBook) },
-    { metric: 'P/S Ratio',            fmp: fmtNum(km.priceToSales),      yahoo: fmtNum(yfk.priceToSales) },
-    { metric: 'EV/EBITDA',            fmp: fmtNum(km.evToEbitda),        yahoo: fmtNum(yfk.enterpriseToEbitda) },
-    { metric: 'EV/Revenue',           fmp: fmtNum(km.evToSales),         yahoo: fmtNum(yfk.enterpriseToRevenue) },
-    { metric: 'PEG Ratio',            fmp: 'N/A',                        yahoo: fmtNum(yfk.pegRatio) },
-    { metric: 'ROE',                  fmp: fmtPct(km.roe),               yahoo: fmtPctRaw(yfc.returnOnEquity) },
-    { metric: 'ROA',                  fmp: fmtPct(km.roa),               yahoo: fmtPctRaw(yfc.returnOnAssets) },
-    { metric: 'Debt/Equity',          fmp: fmtNum(km.debtToEquity),      yahoo: fmtNum(yfc.debtToEquity) },
-    { metric: 'Current Ratio',        fmp: fmtNum(km.currentRatio),      yahoo: fmtNum(yfc.currentRatio) },
-    { metric: 'Quick Ratio',          fmp: fmtNum(km.quickRatio),        yahoo: fmtNum(yfc.quickRatio) },
-    { metric: 'Gross Margin',         fmp: fmtPct(income[0]?.grossMargin), yahoo: fmtPctRaw(yfc.grossMargins) },
-    { metric: 'Operating Margin',     fmp: fmtPct(income[0]?.operatingMargin), yahoo: fmtPctRaw(yfc.operatingMargins) },
-    { metric: 'Net Margin',           fmp: fmtPct(income[0]?.netMargin), yahoo: fmtPctRaw(yfc.profitMargins) },
-    { metric: 'Dividend Yield',       fmp: fmtPct(km.dividendYield),     yahoo: fmtNum(yfk.dividendYield) },
-  ].filter(r => r.fmp !== 'N/A' || r.yahoo !== 'N/A');
+
+  // Format a raw value based on its type
+  const fmtByType = (v, fmt) => {
+    if (v == null || isNaN(v)) return '—';
+    if (fmt === 'currency') return fmtCurrency(v);
+    if (fmt === 'percent') return fmtPct(v);
+    if (fmt === 'shares') return fmtLargeNum(v);
+    return fmtNum(v); // number
+  };
+
+  // Build comparison rows from cross-source object — only show rows with 2+ values
+  const comparisonRows = Object.values(cs)
+    .filter(point => {
+      const sources = [point.fmp, point.yahoo, point.edgar].filter(v => v != null);
+      return sources.length >= 2; // only show when we have 2+ sources to compare
+    })
+    .map(point => ({
+      label:     point.label,
+      fmpFmt:    fmtByType(point.fmp,   point.format),
+      yahooFmt:  fmtByType(point.yahoo, point.format),
+      edgarFmt:  fmtByType(point.edgar, point.format),
+      agreement: point.agreement,
+    }));
 
   /* ── Yahoo analyst rec trend ── */
   const recNow  = yf?.analystRecommendations?.[0] ?? null;
@@ -531,11 +537,7 @@ export default function ResultCard({ data, onReanalyze }) {
         .rc-negative { color: #dc2626; font-weight: 700; }
         .rc-src-fmp   { color: #1d4ed8; font-weight: 700; }
         .rc-src-yahoo { color: #92400e; font-weight: 700; }
-
-        /* Cross-source diff colors */
-        .rc-diff-low  { color: #059669; font-weight: 700; }
-        .rc-diff-mid  { color: #d97706; font-weight: 700; }
-        .rc-diff-high { color: #dc2626; font-weight: 700; }
+        .rc-src-edgar { color: #166534; font-weight: 700; }
 
         /* News */
         .rc-news-list { display: flex; flex-direction: column; gap: 10px; }
@@ -992,18 +994,87 @@ export default function ResultCard({ data, onReanalyze }) {
         )}
 
         {/* ════════════════════════════════════════
-            9. CROSS-SOURCE COMPARISON
+            9. SEC EDGAR OFFICIAL FILINGS
         ════════════════════════════════════════ */}
-        {yf && comparisonRows.length > 0 && (
+        {edgar && (
           <Card>
-            <SectionHeader icon={<GitCompare size={13}/>} title="Cross-Source Data Comparison" accent="#7c3aed" src="both" />
-            <p style={{ fontSize: 12.5, color: '#64748b', margin: '0 0 16px', lineHeight: 1.6 }}>
-              Same metrics reported by both FMP and Yahoo Finance. Differences &gt;15% are highlighted in red — these may reflect timing differences or methodology.
+            <SectionHeader icon={<Award size={13}/>} title="SEC EDGAR — Official Filings" accent="#059669" src="edgar" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+              {[
+                { label: 'Latest 10-K (Annual Report)', date: edgar.filings?.latest10K?.date, url: edgar.filings?.latest10K?.url },
+                { label: 'Latest 10-Q (Quarterly)',     date: edgar.filings?.latest10Q?.date, url: edgar.filings?.latest10Q?.url },
+              ].map((f, i) => f.date && (
+                <div key={i} style={{ padding: '14px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{f.label}</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#14532d', marginBottom: 6 }}>{f.date}</div>
+                  {f.url && <a href={f.url} target="_blank" rel="noopener noreferrer" className="rc-link" style={{ fontSize: 11.5, color: '#059669' }}>View on SEC.gov →</a>}
+                </div>
+              ))}
+              {edgar.filings?.recent8Ks?.length > 0 && (
+                <div style={{ padding: '14px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Recent 8-Ks (90d)</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#78350f', marginBottom: 6 }}>{edgar.filings.recent8Ks.length} events</div>
+                  <a href={edgar.filings?.edgarPageUrl} target="_blank" rel="noopener noreferrer" className="rc-link" style={{ fontSize: 11.5, color: '#d97706' }}>All Filings →</a>
+                </div>
+              )}
+              <div style={{ padding: '14px 16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Entity Name (SEC)</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1e3a8a', marginBottom: 6, lineHeight: 1.4 }}>{edgar.facts?.entityName ?? 'N/A'}</div>
+                <a href={edgar.filings?.edgarPageUrl} target="_blank" rel="noopener noreferrer" className="rc-link" style={{ fontSize: 11.5, color: '#3b82f6' }}>Full EDGAR Profile →</a>
+              </div>
+            </div>
+
+            {/* 5-year EDGAR financial data table */}
+            {edgar.facts?.revenueHistory?.length > 0 && (
+              <>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>5-Year Financial History (from SEC 10-K filings)</div>
+                <div className="rc-table-wrap">
+                  <table className="rc-table">
+                    <thead>
+                      <tr style={{ background: '#f0fdf40d' }}>
+                        {['Fiscal Year End', 'Revenue', 'Net Income', 'EPS Diluted', 'R&D Expense', 'Op. Cash Flow'].map((h, i) => (
+                          <th key={i} className="rc-th" style={{ color: '#059669' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {edgar.facts.revenueHistory.slice(0, 5).map((rev, i) => {
+                        const netIncome   = edgar.facts.netIncomeHistory?.[i]?.value;
+                        const eps         = edgar.facts.epsDilutedHistory?.[i]?.value;
+                        const rd          = edgar.facts.rdHistory?.[i]?.value;
+                        const opCF        = edgar.facts.operatingCFHistory?.[i]?.value;
+                        return (
+                          <tr key={i} className="rc-tr">
+                            <td className="rc-td rc-td-year">{rev.date?.slice(0, 7)}</td>
+                            <td className="rc-td">{fmtCurrency(rev.value)}</td>
+                            <td className="rc-td" style={{ color: netIncome > 0 ? '#059669' : '#dc2626', fontWeight: 700 }}>{fmtCurrency(netIncome)}</td>
+                            <td className="rc-td">{eps != null ? `$${fmtNum(eps)}` : '—'}</td>
+                            <td className="rc-td">{fmtCurrency(rd)}</td>
+                            <td className="rc-td" style={{ color: opCF > 0 ? '#059669' : '#dc2626', fontWeight: 600 }}>{fmtCurrency(opCF)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            10. CROSS-SOURCE COMPARISON (FMP + Yahoo + EDGAR)
+        ════════════════════════════════════════ */}
+        {comparisonRows.length > 0 && (
+          <Card>
+            <SectionHeader icon={<GitCompare size={13}/>} title="Cross-Source Data Verification" accent="#7c3aed" src="all3" />
+            <p style={{ fontSize: 12.5, color: '#64748b', margin: '0 0 14px', lineHeight: 1.6 }}>
+              Same metrics reported by multiple sources. Agreement level shows how closely FMP, Yahoo Finance, and SEC EDGAR align.
             </p>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}>🟢 &lt;5% diff</span>
-              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#fef9c3', color: '#92400e', border: '1px solid #fde68a' }}>🟡 5–15% diff</span>
-              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>🔴 &gt;15% diff</span>
+              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}>✅ HIGH — all sources within 2%</span>
+              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#fef9c3', color: '#92400e', border: '1px solid #fde68a' }}>⚠️ MED — within 10%</span>
+              <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>🔴 LOW — &gt;10% divergence</span>
             </div>
             <ComparisonTable rows={comparisonRows} />
           </Card>

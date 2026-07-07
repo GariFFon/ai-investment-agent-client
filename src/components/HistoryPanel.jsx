@@ -23,26 +23,18 @@ const DATA_SOURCES = [
     url: 'https://finance.yahoo.com',
   },
   {
-    name: 'Google Gemini AI',
-    short: 'Gemini',
-    color: '#6b21a8',
-    bg: '#f3e8ff',
-    border: '#d8b4fe',
-    emoji: '🤖',
-    provides: ['AI Analysis', 'Bull/Bear Case', 'Verdict'],
-    url: 'https://ai.google.dev',
-  },
-  {
-    name: 'MongoDB',
-    short: 'DB',
-    color: '#065f46',
-    bg: '#d1fae5',
-    border: '#6ee7b7',
-    emoji: '🗄️',
-    provides: ['Analysis Cache', 'History'],
-    url: 'https://mongodb.com',
+    name: 'SEC EDGAR',
+    short: 'EDGAR',
+    color: '#166534',
+    bg: '#dcfce7',
+    border: '#bbf7d0',
+    emoji: '🟢',
+    provides: ['10-K / 10-Q Filings', '5-Yr Revenue', 'EPS History', 'R&D Spend', '8-K Events'],
+    url: 'https://www.sec.gov/cgi-bin/browse-edgar',
   },
 ];
+
+
 
 export default function HistoryPanel({ onSelect, refreshTrigger }) {
   const [history, setHistory] = useState([]);
