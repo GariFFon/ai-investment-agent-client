@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import StockChart from './StockChart';
+
 import {
   TrendingUp, TrendingDown, Building2, Users, Globe,
   Calendar, Activity, ExternalLink, DollarSign, Percent,
@@ -259,6 +261,7 @@ function RecBar({ strongBuy = 0, buy = 0, hold = 0, sell = 0, strongSell = 0 }) 
 export default function ResultCard({ data, onReanalyze }) {
   const [reasoningOpen, setReasoningOpen] = useState(false);
   const [reanalyzing, setReanalyzing]     = useState(false);
+  const [activeTab, setActiveTab]         = useState('overview');
 
   const handleReanalyze = async () => {
     if (reanalyzing || !onReanalyze) return;
@@ -625,9 +628,37 @@ export default function ResultCard({ data, onReanalyze }) {
 
       <div className="rc-dashboard">
 
+        {/* ── Tab Bar ── */}
+        <div className="rc-tab-bar">
+          <button
+            className={`rc-tab-btn${activeTab === 'overview' ? ' active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            📊 Overview
+          </button>
+          <button
+            className={`rc-tab-btn${activeTab === 'chart' ? ' active' : ''}`}
+            onClick={() => setActiveTab('chart')}
+          >
+            📈 Price Chart
+          </button>
+        </div>
+
         {/* ════════════════════════════════════════
-            1. COMPANY HEADER
+            CHART TAB
         ════════════════════════════════════════ */}
+        {activeTab === 'chart' && (
+          <Card>
+            <SectionHeader icon={<Activity size={13}/>} title={`${data.ticker} — Price Chart`} accent="#6366f1" />
+            <StockChart ticker={data.ticker} yahooData={raw.yahooData} />
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════
+            OVERVIEW TAB (all existing cards)
+        ════════════════════════════════════════ */}
+        {activeTab === 'overview' && (<>
+
         <Card>
           <div className="rc-header-flex">
             <div style={{ flex: 1, minWidth: 240 }}>
@@ -1091,6 +1122,8 @@ export default function ResultCard({ data, onReanalyze }) {
             </div>
           </Card>
         )}
+
+        </>) /* end overview tab */}
 
       </div>
     </>

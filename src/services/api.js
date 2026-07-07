@@ -18,3 +18,6 @@ export const getHistory = () =>
 
 export const getCompany = (ticker) =>
   API.get(`/api/company/${ticker}`).then((r) => r.data);
+
+export const getChart = (ticker, range = '1Y') =>
+  API.get(`/api/chart/${encodeURIComponent(ticker)}?range=${range}`).then((r) => r.data);
