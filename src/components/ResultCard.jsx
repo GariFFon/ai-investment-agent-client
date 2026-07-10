@@ -161,7 +161,7 @@ function DataTable({ headers, rows, accentColor = '#6366f1' }) {
             <tr key={i} className="rc-tr">
               {row.map((cell, j) => (
                 <td key={j} className={`rc-td ${typeof cell === 'object' && cell?.cls ? cell.cls : ''}`}>
-                  {typeof cell === 'object' && cell?.val !== undefined ? cell.val : cell}
+                  {typeof cell === 'object' && cell !== null && 'val' in cell ? (cell.val ?? '—') : cell}
                 </td>
               ))}
             </tr>
