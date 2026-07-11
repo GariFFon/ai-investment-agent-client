@@ -32,6 +32,16 @@ const DATA_SOURCES = [
     provides: ['10-K / 10-Q Filings', '5-Yr Revenue', 'EPS History', 'R&D Spend', '8-K Events'],
     url: 'https://www.sec.gov/cgi-bin/browse-edgar',
   },
+  {
+    name: 'Screener.in',
+    short: 'Screener',
+    color: '#c2410c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    emoji: '🇮🇳',
+    provides: ['Indian Financials', 'Shareholding', 'Historical Ratios', 'Quarterly Results'],
+    url: 'https://www.screener.in',
+  },
 ];
 
 
