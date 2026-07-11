@@ -166,11 +166,11 @@ export function PixelHero({
   useEffect(() => {
     // Use IntellyInvest brand colors for the pixel canvas
     setPixelColors([
-      "rgba(99, 102, 241, 0.35)",  // indigo
-      "rgba(139, 92, 246, 0.25)",  // violet
-      "rgba(99, 102, 241, 0.15)",  // faint indigo
-      "rgba(139, 92, 246, 0.15)",  // faint violet
-      "rgba(99, 102, 241, 0.5)",   // bright indigo accent
+      "rgba(99, 102, 241, 0.55)",  // indigo
+      "rgba(139, 92, 246, 0.45)",  // violet
+      "rgba(99, 102, 241, 0.35)",  // faint indigo
+      "rgba(139, 92, 246, 0.35)",  // faint violet
+      "rgba(99, 102, 241, 0.8)",   // bright indigo accent
     ]);
 
     const timer = setTimeout(() => setIsLoaded(true), 80);

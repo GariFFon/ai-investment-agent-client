@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PixelHero } from '../components/ui/pixel-perfect-hero';
 import { DockNavbar } from '../components/ui/dock-navbar';
@@ -39,13 +39,90 @@ function ArchStep({ number, icon, title, desc, color, delay }) {
 }
 
 /* ── Feature card ──────────────────────────────────────────────────────────── */
-function FeatureCard({ icon, title, desc, gradient, delay }) {
+function FeatureCard({ icon, title, desc, gradient }) {
   return (
-    <div className="lp-feature-card" style={{ '--delay': delay }}>
+    <div className="lp-feature-card">
       <div className="lp-feature-icon-wrap" style={{ background: gradient }}>{icon}</div>
       <h3 className="lp-feature-title">{title}</h3>
       <p className="lp-feature-desc">{desc}</p>
     </div>
+  );
+}
+
+/* ── Features Carousel ─────────────────────────────────────────────────────── */
+const FEATURES = [
+  { icon: '📊', title: 'Key Financial Metrics',    desc: 'P/E, P/B, EV/EBITDA, Debt/Equity, ROA, ROE, Interest Coverage, Dividend Yield — all fetched live from Financial Modeling Prep.', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
+  { icon: '🐂', title: 'Bull Case — Strengths',    desc: 'The AI identifies competitive moats, growth catalysts, strong balance sheet signals, and tailwinds specific to that company.',          gradient: 'linear-gradient(135deg, #059669, #10b981)' },
+  { icon: '🐻', title: 'Bear Case — Risks',        desc: 'Every potential downside is surfaced — valuation risk, debt concerns, macro headwinds, competitive threats, and sector challenges.',       gradient: 'linear-gradient(135deg, #dc2626, #f87171)' },
+  { icon: '⚖️', title: 'Investment Verdict',       desc: 'A clear INVEST / HOLD / PASS verdict with a confidence score, backed by reasoned analysis — not just a number.',                          gradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
+  { icon: '🔍', title: 'Spotlight Company Search', desc: 'Mac-style search bar. Type any company name, get instant live results with exchange, currency, and ticker info.',                         gradient: 'linear-gradient(135deg, #0ea5e9, #38bdf8)' },
+  { icon: '⚡', title: 'Smart Caching',            desc: 'Analyzed companies are cached locally. Revisit any previous analysis instantly from your Recent Analyses sidebar — no repeat API calls.', gradient: 'linear-gradient(135deg, #7c3aed, #a78bfa)' },
+  { icon: '🕸️', title: 'Agentic Orchestration',   desc: 'Powered by LangGraph, IntellyInvest uses a multi-agent workflow to dynamically fetch data, reason through financials, and compile its final report.', gradient: 'linear-gradient(135deg, #f43f5e, #fb7185)' },
+  { icon: '📰', title: 'Real-Time News',           desc: 'Stay informed with the latest market news and press releases for each company, aggregated directly from Yahoo Finance.',                   gradient: 'linear-gradient(135deg, #0ea5e9, #7dd3fc)' },
+];
+
+function FeaturesCarousel() {
+  const containerRef = useRef(null);
+  const trackRef = useRef(null);
+  const [xVal, setXVal] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current || !trackRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      // Total amount of vertical pixels we have to scroll through the container
+      const scrollHeight = rect.height - window.innerHeight;
+      // Current scroll position within the container
+      const scrolled = -rect.top;
+      
+      let progress = scrolled / scrollHeight;
+      progress = Math.max(0, Math.min(1, progress));
+      
+      // Calculate max horizontal scroll
+      const trackWidth = trackRef.current.scrollWidth;
+      const viewportWidth = window.innerWidth;
+      // Subtract viewport width and add some padding so the last card doesn't touch the edge
+      const maxScroll = Math.max(0, trackWidth - viewportWidth + 80);
+      
+      setXVal(-(maxScroll * progress));
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
+    handleScroll();
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, []);
+
+  return (
+    <section className="lp-fc-container" id="features" ref={containerRef}>
+      <div className="lp-fc-sticky">
+        <div className="lp-fc-header">
+          <div className="lp-section-label">What you get</div>
+          <h2 className="lp-section-h2">Everything an analyst would tell you,<br />delivered instantly</h2>
+          <p className="lp-section-sub">
+            IntellyInvest pulls live financial data and runs it through a multi-step AI reasoning
+            pipeline — giving you the kind of structured insight that would take a human analyst hours.
+          </p>
+        </div>
+        
+        <div className="lp-fc-track-wrapper">
+          <div 
+            className="lp-fc-track-pinned" 
+            ref={trackRef} 
+            style={{ transform: `translateX(${xVal}px)` }}
+          >
+            {FEATURES.map((f, i) => (
+              <div className="lp-fc-item" key={i}>
+                <FeatureCard {...f} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -93,7 +170,6 @@ export default function Landing() {
         githubUrl="#how-it-works"
       />
 
-      {/* ── Stats ────────────────────────────────────────────────────────────── */}
       <section className="lp-stats">
         <div className="lp-stats-inner">
           {[
@@ -112,76 +188,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────────────────────── */}
-      <section className="lp-section" id="features">
-        <div className="lp-section-inner">
-          <div className="lp-section-label">What you get</div>
-          <h2 className="lp-section-h2">Everything an analyst would tell you,<br />delivered instantly</h2>
-          <p className="lp-section-sub">
-            IntellyInvest pulls live financial data and runs it through a multi-step AI reasoning
-            pipeline — giving you the kind of structured insight that would take a human analyst hours.
-          </p>
-
-          <div className="lp-features-grid">
-            <FeatureCard
-              icon="📊"
-              title="Key Financial Metrics"
-              desc="P/E, P/B, EV/EBITDA, Debt/Equity, ROA, ROE, Interest Coverage, Dividend Yield — all fetched live from Financial Modeling Prep."
-              gradient="linear-gradient(135deg, #6366f1, #8b5cf6)"
-              delay="0s"
-            />
-            <FeatureCard
-              icon="🐂"
-              title="Bull Case — Strengths"
-              desc="The AI identifies competitive moats, growth catalysts, strong balance sheet signals, and tailwinds specific to that company."
-              gradient="linear-gradient(135deg, #059669, #10b981)"
-              delay="0.08s"
-            />
-            <FeatureCard
-              icon="🐻"
-              title="Bear Case — Risks"
-              desc="Every potential downside is surfaced — valuation risk, debt concerns, macro headwinds, competitive threats, and sector challenges."
-              gradient="linear-gradient(135deg, #dc2626, #f87171)"
-              delay="0.16s"
-            />
-            <FeatureCard
-              icon="⚖️"
-              title="Investment Verdict"
-              desc="A clear INVEST / HOLD / PASS verdict with a confidence score, backed by reasoned analysis — not just a number."
-              gradient="linear-gradient(135deg, #d97706, #f59e0b)"
-              delay="0.24s"
-            />
-            <FeatureCard
-              icon="🔍"
-              title="Spotlight Company Search"
-              desc="Mac-style search bar. Type any company name, get instant live results with exchange, currency, and ticker info."
-              gradient="linear-gradient(135deg, #0ea5e9, #38bdf8)"
-              delay="0.32s"
-            />
-            <FeatureCard
-              icon="⚡"
-              title="Smart Caching"
-              desc="Analyzed companies are cached locally. Revisit any previous analysis instantly from your Recent Analyses sidebar — no repeat API calls."
-              gradient="linear-gradient(135deg, #7c3aed, #a78bfa)"
-              delay="0.4s"
-            />
-            <FeatureCard
-              icon="🕸️"
-              title="Agentic Orchestration"
-              desc="Powered by LangGraph, IntellyInvest uses a multi-agent workflow to dynamically fetch data, reason through financials, and compile its final report."
-              gradient="linear-gradient(135deg, #f43f5e, #fb7185)"
-              delay="0.48s"
-            />
-            <FeatureCard
-              icon="📰"
-              title="Real-Time News"
-              desc="Stay informed with the latest market news and press releases for each company, aggregated directly from Yahoo Finance."
-              gradient="linear-gradient(135deg, #0ea5e9, #7dd3fc)"
-              delay="0.56s"
-            />
-          </div>
-        </div>
-      </section>
+      {/* ── Features (Pinned Scroll) ─────────────────────────────────────────── */}
+      <FeaturesCarousel />
 
       {/* ── How it works ─────────────────────────────────────────────────────── */}
       <section className="lp-section lp-section-dark" id="how-it-works">
