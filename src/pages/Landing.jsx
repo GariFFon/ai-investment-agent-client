@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PixelHero } from '../components/ui/pixel-perfect-hero';
+import { DockNavbar } from '../components/ui/dock-navbar';
 import './landing.css';
 
 /* ── Animated counter ──────────────────────────────────────────────────────── */
@@ -64,7 +65,7 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -72,23 +73,8 @@ export default function Landing() {
   return (
     <div className="lp-root">
 
-      {/* ── Navbar ──────────────────────────────────────────────────────────── */}
-      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
-        <div className="lp-nav-inner">
-          <div className="lp-nav-logo">
-            <div className="lp-nav-logo-icon">📈</div>
-            <span className="lp-nav-logo-text">InvestIQ</span>
-          </div>
-          <div className="lp-nav-links">
-            <a href="#features" className="lp-nav-link">Features</a>
-            <a href="#how-it-works" className="lp-nav-link">How it works</a>
-            <a href="#architecture" className="lp-nav-link">Architecture</a>
-          </div>
-          <button className="lp-nav-cta" onClick={() => navigate('/app')}>
-            Launch App →
-          </button>
-        </div>
-      </nav>
+      {/* ── Mac Dock Navbar ──────────────────────────────────────────────── */}
+      <DockNavbar onLaunch={() => navigate('/app')} scrolled={scrolled} />
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <PixelHero 
