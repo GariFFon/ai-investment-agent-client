@@ -11,14 +11,18 @@ import {
 /* ─────────────────────────────────────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────────────────────────────────────── */
-const fmtCurrency = (v) => {
+const getCurrencySymbol = (currency) =>
+  currency === 'INR' ? '₹' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+
+const fmtCurrency = (v, currency = 'USD') => {
   if (v == null || isNaN(v)) return 'N/A';
   const abs = Math.abs(v);
   const sign = v < 0 ? '-' : '';
-  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}T`;
-  if (abs >= 1e9)  return `${sign}$${(abs / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6)  return `${sign}$${(abs / 1e6).toFixed(2)}M`;
-  return `${sign}$${abs.toFixed(2)}`;
+  const sym = getCurrencySymbol(currency);
+  if (abs >= 1e12) return `${sign}${sym}${(abs / 1e12).toFixed(2)}T`;
+  if (abs >= 1e9)  return `${sign}${sym}${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6)  return `${sign}${sym}${(abs / 1e6).toFixed(2)}M`;
+  return `${sign}${sym}${abs.toFixed(2)}`;
 };
 const fmtNum    = (v, dec = 2) => (v == null || isNaN(v) ? 'N/A' : Number(v).toFixed(dec));
 const fmtPct    = (v, dec = 2) => (v == null || isNaN(v) ? 'N/A' : `${Number(v * (Math.abs(v) < 2 ? 100 : 1)).toFixed(dec)}%`);
@@ -271,6 +275,14 @@ export default function ResultCard({ data, onReanalyze }) {
   const vc      = VERDICT_CFG[data.verdict] ?? VERDICT_CFG.HOLD;
   const raw     = data.rawData ?? {};
   const profile = raw.companyProfile  ?? {};
+  
+  // Fallback to INR if country is IN or it's an Indian exchange
+  let currency = profile.currency ?? raw.yahooData?.currentFinancials?.currency ?? 'USD';
+  if ((profile.country === 'IN' || data.ticker?.endsWith('.BO') || data.ticker?.endsWith('.NS')) && (!profile.currency || profile.currency === 'USD' || profile.currency === 'INR')) {
+    currency = 'INR';
+  }
+
+  const currSym  = getCurrencySymbol(currency);
   const income  = raw.incomeStatement ?? [];
   const balance = raw.balanceSheet    ?? [];
   const cashflow= raw.cashFlow        ?? [];
@@ -284,33 +296,33 @@ export default function ResultCard({ data, onReanalyze }) {
   /* ── FMP Table rows ── */
   const incomeRows = income.map((d) => [
     { val: d.year, cls: 'rc-td-year' },
-    fmtCurrency(d.revenue),
-    fmtCurrency(d.grossProfit),
+    fmtCurrency(d.revenue, currency),
+    fmtCurrency(d.grossProfit, currency),
     { val: fmtPct(d.grossMargin), cls: 'rc-positive' },
-    fmtCurrency(d.operatingIncome),
+    fmtCurrency(d.operatingIncome, currency),
     { val: fmtPct(d.operatingMargin), cls: 'rc-positive' },
-    fmtCurrency(d.netIncome),
+    fmtCurrency(d.netIncome, currency),
     { val: fmtPct(d.netMargin), cls: 'rc-positive' },
-    `$${fmtNum(d.eps)}`,
-    fmtCurrency(d.ebitda),
+    `${currSym}${fmtNum(d.eps)}`,
+    fmtCurrency(d.ebitda, currency),
   ]);
 
   const balanceRows = balance.map((d) => [
     { val: d.year, cls: 'rc-td-year' },
-    fmtCurrency(d.cash),
-    fmtCurrency(d.totalAssets),
-    { val: fmtCurrency(d.totalDebt), cls: 'rc-negative' },
-    { val: fmtCurrency(d.totalLiabilities), cls: 'rc-negative' },
-    { val: fmtCurrency(d.totalEquity), cls: 'rc-positive' },
+    fmtCurrency(d.cash, currency),
+    fmtCurrency(d.totalAssets, currency),
+    { val: fmtCurrency(d.totalDebt, currency), cls: 'rc-negative' },
+    { val: fmtCurrency(d.totalLiabilities, currency), cls: 'rc-negative' },
+    { val: fmtCurrency(d.totalEquity, currency), cls: 'rc-positive' },
     { val: fmtNum(d.currentRatio), cls: d.currentRatio >= 1 ? 'rc-positive' : 'rc-negative' },
   ]);
 
   const cfRows = cashflow.map((d) => [
     { val: d.year, cls: 'rc-td-year' },
-    { val: fmtCurrency(d.operatingCashFlow), cls: 'rc-positive' },
-    { val: fmtCurrency(d.capitalExpenditure), cls: 'rc-negative' },
-    { val: fmtCurrency(d.freeCashFlow), cls: d.freeCashFlow > 0 ? 'rc-positive' : 'rc-negative' },
-    fmtCurrency(Math.abs(d.dividendsPaid)),
+    { val: fmtCurrency(d.operatingCashFlow, currency), cls: 'rc-positive' },
+    { val: fmtCurrency(d.capitalExpenditure, currency), cls: 'rc-negative' },
+    { val: fmtCurrency(d.freeCashFlow, currency), cls: d.freeCashFlow > 0 ? 'rc-positive' : 'rc-negative' },
+    fmtCurrency(Math.abs(d.dividendsPaid), currency),
   ]);
 
   /* ── FMP Key Metrics Groups ── */
@@ -352,7 +364,7 @@ export default function ResultCard({ data, onReanalyze }) {
       cards: [
         { label: 'Current Ratio',   value: fmtNum(km.currentRatio),      icon: <Activity size={13}/>,    accent: '#d97706' },
         { label: 'Quick Ratio',     value: fmtNum(km.quickRatio),        icon: <Activity size={13}/>,    accent: '#f59e0b' },
-        { label: 'Working Capital', value: fmtCurrency(km.workingCapital),icon: <DollarSign size={13}/>, accent: '#d97706' },
+        { label: 'Working Capital', value: fmtCurrency(km.workingCapital, currency),icon: <DollarSign size={13}/>, accent: '#d97706' },
       ],
     },
     {
@@ -681,13 +693,13 @@ export default function ResultCard({ data, onReanalyze }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
               {profile.price != null && (
                 <div className="rc-price-block">
-                  <div className="rc-price">${fmtNum(profile.price)}</div>
+                  <div className="rc-price">{currSym}{fmtNum(profile.price)}</div>
                   <div className="rc-beta">β {fmtNum(profile.beta)}</div>
                 </div>
               )}
               {yfc.currentPrice && !profile.price && (
                 <div className="rc-price-block">
-                  <div className="rc-price">${fmtNum(yfc.currentPrice)}</div>
+                  <div className="rc-price">{currSym}{fmtNum(yfc.currentPrice)}</div>
                   <SourceBadge src="yahoo" />
                 </div>
               )}
@@ -704,7 +716,7 @@ export default function ResultCard({ data, onReanalyze }) {
             {profile.employees && <StatItem icon={<Users size={13}/>}     label="Employees" value={fmtLargeNum(profile.employees)} />}
             {profile.country   && <StatItem icon={<Globe size={13}/>}     label="Country"   value={profile.country} />}
             {profile.ipoDate   && <StatItem icon={<Calendar size={13}/>}  label="IPO Date"  value={profile.ipoDate} />}
-            {profile.marketCap && <StatItem icon={<DollarSign size={13}/>}label="Market Cap" value={fmtCurrency(profile.marketCap)} />}
+            {profile.marketCap && <StatItem icon={<DollarSign size={13}/>}label="Market Cap" value={fmtCurrency(profile.marketCap, currency)} />}
             {profile.website   && <StatItem icon={<ExternalLink size={13}/>} label="Website" value="Visit site" href={profile.website} />}
           </div>
 
