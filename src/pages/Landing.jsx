@@ -253,6 +253,20 @@ export default function Landing() {
               gradient="linear-gradient(135deg, #7c3aed, #a78bfa)"
               delay="0.4s"
             />
+            <FeatureCard
+              icon="🕸️"
+              title="Agentic Orchestration"
+              desc="Powered by LangGraph, InvestIQ uses a multi-agent workflow to dynamically fetch data, reason through financials, and compile its final report."
+              gradient="linear-gradient(135deg, #f43f5e, #fb7185)"
+              delay="0.48s"
+            />
+            <FeatureCard
+              icon="📰"
+              title="Real-Time News"
+              desc="Stay informed with the latest market news and press releases for each company, aggregated directly from Yahoo Finance."
+              gradient="linear-gradient(135deg, #0ea5e9, #7dd3fc)"
+              delay="0.56s"
+            />
           </div>
         </div>
       </section>
@@ -274,8 +288,8 @@ export default function Landing() {
                 desc: 'We simultaneously fetch company profile, key metrics, financial ratios, stock quote, income statement, balance sheet, and cash flows.',
               },
               {
-                n: '03', icon: '🤖', title: 'AI Reasoning',
-                desc: 'All data is passed to Google Gemini 2.5 Flash with a carefully crafted analyst prompt. The model reasons through strengths, risks, and verdict.',
+                n: '03', icon: '🤖', title: 'Agent Orchestration',
+                desc: 'Using LangChain and LangGraph, a multi-agent workflow passes data to Google Gemini 2.5 Flash to reason through strengths, risks, and verdict.',
               },
               {
                 n: '04', icon: '📋', title: 'Structured Report',
@@ -343,9 +357,9 @@ export default function Landing() {
                   <small>In-memory company store with TTL</small>
                 </div>
                 <div className="lp-arch-card lp-arch-card-blue">
-                  <span className="lp-arch-card-icon">📝</span>
-                  <strong>Prompt Engine</strong>
-                  <small>Structured analyst.js prompt template</small>
+                  <span className="lp-arch-card-icon">🕸️</span>
+                  <strong>Agent Orchestration</strong>
+                  <small>LangGraph · LangChain · Multi-step pipelines</small>
                 </div>
               </div>
             </div>
@@ -368,7 +382,7 @@ export default function Landing() {
                 <div className="lp-arch-card lp-arch-card-green">
                   <span className="lp-arch-card-icon">📰</span>
                   <strong>Yahoo Finance</strong>
-                  <small>Analyst estimates · Institutional ownership</small>
+                  <small>Market News · Analyst estimates · Ownership</small>
                 </div>
                 <div className="lp-arch-card lp-arch-card-green">
                   <span className="lp-arch-card-icon">🏛️</span>
@@ -397,6 +411,8 @@ export default function Landing() {
               <TechBadge name="Vite" icon="⚡" />
               <TechBadge name="Node.js" icon="🟢" />
               <TechBadge name="Express" icon="🚂" />
+              <TechBadge name="LangChain" icon="🦜" />
+              <TechBadge name="LangGraph" icon="🕸️" />
               <TechBadge name="Gemini AI" icon="✨" />
               <TechBadge name="FMP API" icon="📊" />
               <TechBadge name="Yahoo Finance" icon="📰" />
