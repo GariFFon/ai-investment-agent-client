@@ -1,6 +1,15 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { BarChart2, Layers, Cpu, Rocket } from 'lucide-react';
 
+/* Load Playfair Display once at module level — never re-injected */
+if (typeof document !== 'undefined' && !document.getElementById('dock-font-playfair')) {
+  const link = document.createElement('link');
+  link.id = 'dock-font-playfair';
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&display=swap';
+  document.head.appendChild(link);
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────────────────────────────────────────── */
@@ -275,36 +284,35 @@ export function DockNavbar({ onLaunch, scrolled }) {
             if (item.isLogo) {
               return (
                 <div key="logo" style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '0 8px 0 2px',
-                  pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0 8px 0 2px',
+                pointerEvents: 'none',
+                flexShrink: 0,
+              }}>
+                <div style={{
+                  width: '28px', height: '28px',
+                  borderRadius: '7px',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '14px',
+                  boxShadow: '0 2px 8px rgba(99,102,241,0.45)',
                   flexShrink: 0,
-                }}>
-                  <div style={{
-                    width: '28px', height: '28px',
-                    borderRadius: '7px',
-                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '14px',
-                    boxShadow: '0 2px 8px rgba(99,102,241,0.45)',
-                    flexShrink: 0,
-                  }}>📈</div>
-                  <span style={{
-                    fontSize: '14.5px',
-                    fontWeight: 800,
-                    letterSpacing: '-0.025em',
-                    background: scrolled
-                      ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
-                      : 'linear-gradient(135deg, #a5b4fc, #c4b5fd)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    fontFamily: "'Inter', system-ui, sans-serif",
-                    userSelect: 'none',
-                  }}>InvestIQ</span>
-                </div>
+                }}>📈</div>
+                <span style={{
+                  fontSize: '22px',
+                  fontWeight: 900,
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontStyle: 'normal',
+                  letterSpacing: '-0.04em',
+                  /* Simple color transition — no webkit-clip that causes flash */
+                  color: scrolled ? '#6366f1' : '#a5b4fc',
+                  transition: 'color 0.35s ease',
+                  userSelect: 'none',
+                  lineHeight: 1,
+                }}>II</span>
+              </div>
               );
             }
 
