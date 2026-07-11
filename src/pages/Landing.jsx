@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PixelHero } from '../components/ui/pixel-perfect-hero';
 import './landing.css';
-
 
 /* ── Animated counter ──────────────────────────────────────────────────────── */
 function Counter({ target, suffix = '', prefix = '' }) {
@@ -91,95 +91,21 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <section className="lp-hero">
-        {/* Background orbs */}
-        <div className="lp-orb lp-orb-1" />
-        <div className="lp-orb lp-orb-2" />
-        <div className="lp-orb lp-orb-3" />
-
-        <div className="lp-hero-inner">
-          {/* ── Left Column: text content ── */}
-          <div className="lp-hero-left">
-            <div className="lp-hero-badge">
-              <span className="lp-hero-badge-dot" />
-              AI-Powered Investment Intelligence
-            </div>
-
-            <h1 className="lp-hero-h1">
-              Analyze any company
-              <span className="lp-hero-gradient"> in seconds</span>
-              <br />with AI
-            </h1>
-
-            <p className="lp-hero-sub">
-              InvestIQ combines real-time financial data with Google Gemini AI to deliver
-              institutional-grade company analysis — Bull case, Bear case, Key metrics,
-              and an investment verdict. No subscriptions. No jargon.
-            </p>
-
-            <div className="lp-hero-actions">
-              <button className="lp-btn-primary" onClick={() => navigate('/app')}>
-                <span>Start Analyzing Free</span>
-                <span className="lp-btn-arrow">→</span>
-              </button>
-              <a href="#how-it-works" className="lp-btn-ghost">
-                See how it works ↓
-              </a>
-            </div>
-
-            <div className="lp-hero-trust">
-              <span className="lp-trust-dot" />
-              <span>No sign-up &nbsp;·&nbsp; Free to use &nbsp;·&nbsp; Instant results</span>
-            </div>
-          </div>
-
-          {/* ── Right Column: browser mockup ── */}
-          <div className="lp-hero-right">
-            <div className="lp-preview-card">
-              <div className="lp-preview-header">
-                <div className="lp-preview-dots">
-                  <span /><span /><span />
-                </div>
-                <span className="lp-preview-url">investiq.app</span>
-              </div>
-              <div className="lp-preview-body">
-                <div className="lp-preview-sidebar">
-                  <div className="lp-preview-logo-row">
-                    <div className="lp-preview-logo-box" />
-                    <div className="lp-preview-logo-text" />
-                  </div>
-                  <div className="lp-preview-btn-mock" />
-                  <div className="lp-preview-section-label" />
-                  <div className="lp-preview-history-item" />
-                  <div className="lp-preview-history-item" />
-                  <div className="lp-preview-history-item" />
-                </div>
-                <div className="lp-preview-main">
-                  <div className="lp-preview-company-header">
-                    <div>
-                      <div className="lp-preview-company-name" />
-                      <div className="lp-preview-company-tags">
-                        <div className="lp-preview-tag" />
-                        <div className="lp-preview-tag lp-tag-green" />
-                      </div>
-                    </div>
-                    <div className="lp-preview-price" />
-                  </div>
-                  <div className="lp-preview-metrics-grid">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="lp-preview-metric" />
-                    ))}
-                  </div>
-                  <div className="lp-preview-verdict-row">
-                    <div className="lp-preview-bull-card" />
-                    <div className="lp-preview-bear-card" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PixelHero 
+        word1="Intelligent"
+        word2="Investing."
+        description="InvestIQ combines real-time financial data with Gemini AI to deliver institutional-grade company analysis. No subscriptions. No jargon."
+        primaryCta="Start Analyzing Free"
+        primaryCtaMobile="Start"
+        secondaryCta="How it works"
+        secondaryCtaMobile="Process"
+        onPrimaryClick={() => navigate('/app')}
+        onSecondaryClick={(e) => { 
+          e.preventDefault(); 
+          document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }); 
+        }}
+        githubUrl="#how-it-works"
+      />
 
       {/* ── Stats ────────────────────────────────────────────────────────────── */}
       <section className="lp-stats">
