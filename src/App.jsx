@@ -341,7 +341,7 @@ export default function App() {
       <aside className="sidebar">
         <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none' }}>
           <div className="logo-icon">📈</div>
-          <h2>InvestIQ</h2>
+          <h2>IntellyInvest</h2>
         </Link>
 
         <button

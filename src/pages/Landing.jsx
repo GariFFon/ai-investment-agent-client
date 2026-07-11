@@ -80,7 +80,7 @@ export default function Landing() {
       <PixelHero 
         word1="Intelligent"
         word2="Investing."
-        description="InvestIQ combines real-time financial data with Gemini AI to deliver institutional-grade company analysis. No subscriptions. No jargon."
+        description="IntellyInvest combines real-time financial data with Gemini AI to deliver institutional-grade company analysis. No subscriptions. No jargon."
         primaryCta="Start Analyzing Free"
         primaryCtaMobile="Start"
         secondaryCta="How it works"
@@ -118,7 +118,7 @@ export default function Landing() {
           <div className="lp-section-label">What you get</div>
           <h2 className="lp-section-h2">Everything an analyst would tell you,<br />delivered instantly</h2>
           <p className="lp-section-sub">
-            InvestIQ pulls live financial data and runs it through a multi-step AI reasoning
+            IntellyInvest pulls live financial data and runs it through a multi-step AI reasoning
             pipeline — giving you the kind of structured insight that would take a human analyst hours.
           </p>
 
@@ -168,7 +168,7 @@ export default function Landing() {
             <FeatureCard
               icon="🕸️"
               title="Agentic Orchestration"
-              desc="Powered by LangGraph, InvestIQ uses a multi-agent workflow to dynamically fetch data, reason through financials, and compile its final report."
+              desc="Powered by LangGraph, IntellyInvest uses a multi-agent workflow to dynamically fetch data, reason through financials, and compile its final report."
               gradient="linear-gradient(135deg, #f43f5e, #fb7185)"
               delay="0.48s"
             />
@@ -226,7 +226,7 @@ export default function Landing() {
           <div className="lp-section-label">Under the hood</div>
           <h2 className="lp-section-h2">A modern full-stack AI architecture</h2>
           <p className="lp-section-sub">
-            InvestIQ is built on a clean client-server architecture where the React frontend
+            IntellyInvest is built on a clean client-server architecture where the React frontend
             talks to an Express backend, which orchestrates financial data fetching and AI inference.
           </p>
 
@@ -346,7 +346,7 @@ export default function Landing() {
             No sign-up. No credit card. Just search a company and let the AI do the work.
           </p>
           <button className="lp-btn-primary lp-btn-large" onClick={() => navigate('/app')}>
-            <span>Launch InvestIQ</span>
+            <span>Launch IntellyInvest</span>
             <span className="lp-btn-arrow">→</span>
           </button>
           <p className="lp-cta-hint">Try: NVIDIA · Apple · Tesla · Reliance · Infosys</p>
@@ -359,13 +359,13 @@ export default function Landing() {
           <div className="lp-footer-left">
             <div className="lp-nav-logo">
               <div className="lp-nav-logo-icon">📈</div>
-              <span className="lp-nav-logo-text">InvestIQ</span>
+              <span className="lp-nav-logo-text">IntellyInvest</span>
             </div>
             <p className="lp-footer-tagline">AI-powered company analysis for everyone.</p>
           </div>
           <div className="lp-footer-right">
             <p className="lp-footer-disclaimer">
-              ⚠️ InvestIQ is for informational purposes only. Nothing on this platform constitutes
+              ⚠️ IntellyInvest is for informational purposes only. Nothing on this platform constitutes
               financial advice. Always do your own due diligence before investing.
             </p>
           </div>

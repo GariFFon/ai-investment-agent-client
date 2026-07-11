@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, LineChart, Newspaper, Landmark, Globe, BrainCircuit, ChevronDown } from "lucide-react";
 
 /* -----------------------------------------------------------------------------
- * BRAND LOGOS — InvestIQ data sources
+ * BRAND LOGOS — IntellyInvest data sources
  * -------------------------------------------------------------------------- */
 const BRAND_LOGOS = [
   { icon: LineChart, label: "FMP" },
@@ -152,7 +152,7 @@ function PixelCanvas({ colors, gap = 6, speed = 30 }) {
 export function PixelHero({
   word1 = "Intelligent",
   word2 = "Investing.",
-  description = "InvestIQ combines real-time financial data with Gemini AI to deliver institutional-grade company analysis. No subscriptions. No jargon.",
+  description = "IntellyInvest combines real-time financial data with Gemini AI to deliver institutional-grade company analysis. No subscriptions. No jargon.",
   primaryCta = "Start Analyzing Free",
   primaryCtaMobile = "Start",
   secondaryCta = "How it works",
@@ -164,7 +164,7 @@ export function PixelHero({
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    // Use InvestIQ brand colors for the pixel canvas
+    // Use IntellyInvest brand colors for the pixel canvas
     setPixelColors([
       "rgba(99, 102, 241, 0.35)",  // indigo
       "rgba(139, 92, 246, 0.25)",  // violet

@@ -230,7 +230,7 @@ export function DockNavbar({ onLaunch, scrolled }) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
   const NAV_ITEMS = [
-    { id: 'logo', label: 'InvestIQ', icon: null, isLogo: true },
+    { id: 'logo', label: 'IntellyInvest', icon: null, isLogo: true },
     null,
     { id: 'features',     label: 'Features',     icon: BarChart2 },
     { id: 'how-it-works', label: 'How It Works', icon: Layers },
@@ -301,17 +301,16 @@ export function DockNavbar({ onLaunch, scrolled }) {
                   flexShrink: 0,
                 }}>📈</div>
                 <span style={{
-                  fontSize: '22px',
+                  fontSize: '15px',
                   fontWeight: 900,
                   fontFamily: "'Playfair Display', Georgia, serif",
                   fontStyle: 'normal',
-                  letterSpacing: '-0.04em',
-                  /* Simple color transition — no webkit-clip that causes flash */
+                  letterSpacing: '-0.03em',
                   color: scrolled ? '#6366f1' : '#a5b4fc',
                   transition: 'color 0.35s ease',
                   userSelect: 'none',
                   lineHeight: 1,
-                }}>II</span>
+                }}>IntellyInvest</span>
               </div>
               );
             }
