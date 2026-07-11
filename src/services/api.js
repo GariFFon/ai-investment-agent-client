@@ -21,3 +21,6 @@ export const getCompany = (ticker) =>
 
 export const getChart = (ticker, range = '1Y') =>
   API.get(`/api/chart/${encodeURIComponent(ticker)}?range=${range}`).then((r) => r.data);
+
+export const getNews = () =>
+  API.get('/api/news').then((r) => r.data);

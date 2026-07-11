@@ -365,6 +365,21 @@ export default function Landing() {
                   <strong>Financial Modeling Prep</strong>
                   <small>Live quotes · Ratios · Financials · Profile</small>
                 </div>
+                <div className="lp-arch-card lp-arch-card-green">
+                  <span className="lp-arch-card-icon">📰</span>
+                  <strong>Yahoo Finance</strong>
+                  <small>Analyst estimates · Institutional ownership</small>
+                </div>
+                <div className="lp-arch-card lp-arch-card-green">
+                  <span className="lp-arch-card-icon">🏛️</span>
+                  <strong>SEC EDGAR</strong>
+                  <small>Official US filings · 10-K · 10-Q · Historicals</small>
+                </div>
+                <div className="lp-arch-card lp-arch-card-green">
+                  <span className="lp-arch-card-icon">🇮🇳</span>
+                  <strong>Screener.in</strong>
+                  <small>Indian market data · Shareholding · Ratios</small>
+                </div>
                 <div className="lp-arch-card lp-arch-card-amber">
                   <span className="lp-arch-card-icon">🤖</span>
                   <strong>Google Gemini 2.5 Flash</strong>
@@ -384,8 +399,10 @@ export default function Landing() {
               <TechBadge name="Express" icon="🚂" />
               <TechBadge name="Gemini AI" icon="✨" />
               <TechBadge name="FMP API" icon="📊" />
+              <TechBadge name="Yahoo Finance" icon="📰" />
+              <TechBadge name="SEC EDGAR" icon="🏛️" />
+              <TechBadge name="Screener.in" icon="🇮🇳" />
               <TechBadge name="Axios" icon="🔗" />
-              <TechBadge name="LangGraph" icon="🕸️" />
             </div>
           </div>
         </div>

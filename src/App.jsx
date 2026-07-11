@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import LoadingState from './components/LoadingState';
 import ResultCard from './components/ResultCard';
 import HistoryPanel from './components/HistoryPanel';
-import { analyzeCompany, reanalyzeCompany, getCompany, searchCompanies } from './services/api';
+import { analyzeCompany, reanalyzeCompany, getCompany, searchCompanies, getNews } from './services/api';
 import './index.css';
 
 /* ── Debounce hook ───────────────────────────────────────────────────────── */
@@ -127,23 +127,149 @@ function SpotlightModal({ onClose, onSelect }) {
   );
 }
 
-/* ── Empty State ─────────────────────────────────────────────────────────── */
-function EmptyState({ onSearch }) {
+/* ── Relative time helper ─────────────────────────────────────────────── */
+function timeAgo(isoString) {
+  const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+/* ── Topic badge colours ──────────────────────────────────────────────── */
+const TOPIC_COLOURS = {
+  'S&P 500': 'var(--accent)',
+  'NASDAQ': '#06b6d4',
+  'Bitcoin': '#f59e0b',
+  'Top Stocks': '#10b981',
+};
+
+/* ── Single news card ─────────────────────────────────────────────────── */
+function NewsCard({ item, index }) {
+  const colour = TOPIC_COLOURS[item.topic] || 'var(--accent)';
   return (
-    <div className="empty-state">
-      <div className="empty-state-icon">📊</div>
-      <h2>No company selected</h2>
-      <p>
-        Search any publicly listed company to get an AI-powered analysis with financial metrics, bull &amp; bear case, and an investment verdict.
-      </p>
-      <button className="new-analysis-btn" style={{ marginTop: '8px', width: 'auto', padding: '12px 24px' }} onClick={onSearch}>
-        <span className="new-analysis-plus">+</span>
-        Search a company
-        <kbd className="new-analysis-kbd">⌘K</kbd>
-      </button>
-      <p style={{ fontSize: '12px', color: 'var(--text-placeholder)', marginTop: '12px' }}>
-        Try: NVIDIA · Apple · Tesla · Reliance · Infosys
-      </p>
+    <a
+      href={item.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="news-card"
+      style={{ '--i': index, '--topic-color': colour }}
+    >
+      <div className="news-card-top">
+        <span className="news-topic-badge" style={{ background: colour + '22', color: colour, borderColor: colour + '44' }}>
+          {item.topic}
+        </span>
+        <span className="news-time">{timeAgo(item.pubDate)}</span>
+      </div>
+      <h3 className="news-title">{item.title}</h3>
+      {item.description && <p className="news-desc">{item.description}</p>}
+      <div className="news-card-footer">
+        <span className="news-source">📰 {item.source}</span>
+        <span className="news-arrow">→</span>
+      </div>
+    </a>
+  );
+}
+
+/* ── Skeleton card ────────────────────────────────────────────────────── */
+function NewsCardSkeleton({ index }) {
+  return (
+    <div className="news-card news-card-skeleton" style={{ '--i': index }}>
+      <div className="skel skel-badge" />
+      <div className="skel skel-title" />
+      <div className="skel skel-title skel-title-short" />
+      <div className="skel skel-desc" />
+      <div className="skel skel-desc skel-desc-short" />
+    </div>
+  );
+}
+
+/* ── Market News Feed (replaces bland EmptyState) ─────────────────────── */
+function MarketNewsFeed({ onSearch }) {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [fetchedAt, setFetchedAt] = useState(null);
+  const [filter, setFilter] = useState('All');
+
+  const topics = ['All', 'S&P 500', 'NASDAQ', 'Bitcoin', 'Top Stocks'];
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getNews()
+      .then((data) => {
+        if (!cancelled) {
+          setNews(data.news || []);
+          setFetchedAt(data.fetchedAt);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError('Could not load news. Please try again later.');
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const filtered = filter === 'All' ? news : news.filter((n) => n.topic === filter);
+
+  return (
+    <div className="market-news-feed">
+      {/* Header */}
+      <div className="news-feed-header">
+        <div className="news-feed-header-left">
+          <div className="news-live-dot" />
+          <h2 className="news-feed-title">Market News</h2>
+          {fetchedAt && (
+            <span className="news-feed-updated">Updated {timeAgo(fetchedAt)}</span>
+          )}
+        </div>
+        <button
+          className="new-analysis-btn news-search-btn"
+          onClick={onSearch}
+          style={{ padding: '8px 16px', fontSize: '13px' }}
+        >
+          <span className="new-analysis-plus">+</span>
+          Analyze a company
+          <kbd className="new-analysis-kbd">⌘K</kbd>
+        </button>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="news-filter-tabs">
+        {topics.map((t) => (
+          <button
+            key={t}
+            className={`news-filter-tab${filter === t ? ' active' : ''}`}
+            onClick={() => setFilter(t)}
+            style={filter === t ? { '--tab-color': TOPIC_COLOURS[t] || 'var(--accent)' } : {}}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Error */}
+      {error && !loading && (
+        <div className="news-error">
+          <span>⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Grid */}
+      <div className="news-grid">
+        {loading
+          ? [...Array(9)].map((_, i) => <NewsCardSkeleton key={i} index={i} />)
+          : filtered.map((item, i) => <NewsCard key={item.link} item={item} index={i} />)
+        }
+        {!loading && !error && filtered.length === 0 && (
+          <div className="news-empty">No news for this topic right now.</div>
+        )}
+      </div>
+
+      {/* Footer hint */}
+      <p className="news-feed-hint">Search a company above to get AI-powered analysis · Try: NVIDIA · Apple · Reliance · Infosys</p>
     </div>
   );
 }
@@ -254,7 +380,7 @@ export default function App() {
         {result && !loading && <ResultCard data={result} onReanalyze={handleReanalyze} />}
 
         {!result && !loading && !error && (
-          <EmptyState onSearch={() => setShowSpotlight(true)} />
+          <MarketNewsFeed onSearch={() => setShowSpotlight(true)} />
         )}
       </main>
     </div>
