@@ -1081,3 +1081,17 @@ body {
   .sidebar { display: none; }
   .main { padding: 24px 18px; }
 }
+
+/* ── Tailwind utility classes for WaveLoader ── */
+.flex { display: flex; }
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-row-reverse { flex-direction: row-reverse; }
+.w-2 { width: 0.5rem; }
+.h-5 { height: 1.25rem; }
+.bg-foreground { background-color: var(--accent); border-radius: 4px; }
+.origin-bottom { transform-origin: bottom; }
