@@ -1118,17 +1118,23 @@ body {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  animation: news-fade-in 0.6s ease-out both;
+}
+
+@keyframes news-fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .news-feed-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .news-live-dot {
-  width: 9px;
-  height: 9px;
+  width: 12px;
+  height: 12px;
   background: var(--green);
   border-radius: 50%;
   box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4);
@@ -1138,22 +1144,23 @@ body {
 
 @keyframes news-pulse {
   0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0.45); }
-  70%  { box-shadow: 0 0 0 8px rgba(5,150,105,0); }
+  70%  { box-shadow: 0 0 0 10px rgba(5,150,105,0); }
   100% { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
 }
 
 .news-feed-title {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
 }
 
 .news-feed-updated {
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-muted);
   background: var(--bg-subtle);
-  padding: 2px 8px;
+  padding: 4px 12px;
   border-radius: 20px;
   border: 1px solid var(--border);
 }
@@ -1166,20 +1173,21 @@ body {
 /* ── Filter tabs ── */
 .news-filter-tabs {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
+  animation: news-fade-in 0.6s ease-out 0.1s both;
 }
 
 .news-filter-tab {
-  padding: 5px 14px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-med);
-  border-radius: 20px;
+  border-radius: 24px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
 }
 
@@ -1187,13 +1195,16 @@ body {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-bg);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .news-filter-tab.active {
   background: var(--tab-color, var(--accent));
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
 
 /* ── News grid ── */

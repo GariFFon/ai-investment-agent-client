@@ -224,15 +224,6 @@ function MarketNewsFeed({ onSearch }) {
             <span className="news-feed-updated">Updated {timeAgo(fetchedAt)}</span>
           )}
         </div>
-        <button
-          className="new-analysis-btn news-search-btn"
-          onClick={onSearch}
-          style={{ padding: '8px 16px', fontSize: '13px' }}
-        >
-          <span className="new-analysis-plus">+</span>
-          Analyze a company
-          <kbd className="new-analysis-kbd">⌘K</kbd>
-        </button>
       </div>
 
       {/* Filter tabs */}
