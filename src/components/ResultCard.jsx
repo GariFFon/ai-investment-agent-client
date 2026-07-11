@@ -784,7 +784,34 @@ export default function ResultCard({ data, onReanalyze }) {
             </button>
           )}
           {reasoningOpen && <div className="rc-reasoning-text">{data.reasoning}</div>}
+
         </Card>
+
+        {/* ── Bull / Bear separate cards under verdict ── */}
+        {((data.strengths?.length > 0) || (data.risks?.length > 0)) && (
+          <div className="rc-bb-grid">
+            {data.strengths?.length > 0 && (
+              <Card>
+                <SectionHeader icon={<TrendingUp size={13}/>} title="Bull Case — Strengths" accent="#059669" />
+                <ul className="rc-bb-list">
+                  {data.strengths.map((s, i) => (
+                    <li key={i} className="rc-bb-item rc-bull-item"><span className="rc-bull-dot">✓</span>{s}</li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+            {data.risks?.length > 0 && (
+              <Card>
+                <SectionHeader icon={<TrendingDown size={13}/>} title="Bear Case — Risks" accent="#dc2626" />
+                <ul className="rc-bb-list">
+                  {data.risks.map((r, i) => (
+                    <li key={i} className="rc-bb-item rc-bear-item"><span className="rc-bear-dot">⚠</span>{r}</li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* ════════════════════════════════════════
             3. ANALYST CONSENSUS (Yahoo)
@@ -1138,31 +1165,7 @@ export default function ResultCard({ data, onReanalyze }) {
           ))}
         </Card>
 
-        {/* ════════════════════════════════════════
-            11. BULL / BEAR
-        ════════════════════════════════════════ */}
-        <div className="rc-bb-grid">
-          <Card>
-            <SectionHeader icon={<TrendingUp size={13}/>} title="Bull Case — Strengths" accent="#059669" />
-            <ul className="rc-bb-list">
-              {(data.strengths ?? []).map((s, i) => (
-                <li key={i} className="rc-bb-item rc-bull-item">
-                  <span className="rc-bull-dot">✓</span>{s}
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <Card>
-            <SectionHeader icon={<TrendingDown size={13}/>} title="Bear Case — Risks" accent="#dc2626" />
-            <ul className="rc-bb-list">
-              {(data.risks ?? []).map((r, i) => (
-                <li key={i} className="rc-bb-item rc-bear-item">
-                  <span className="rc-bear-dot">⚠</span>{r}
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
+        {/* Bull / Bear moved into Investment Verdict card above */}
 
         {/* ════════════════════════════════════════
             12. INCOME STATEMENT (FMP)
