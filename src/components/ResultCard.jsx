@@ -668,14 +668,7 @@ export default function ResultCard({ data, onReanalyze }) {
           >
             📊 Overview
           </button>
-          {isIndian && (
-            <button
-              className={`rc-tab-btn${activeTab === 'india' ? ' active' : ''}`}
-              onClick={() => setActiveTab('india')}
-            >
-              🇮🇳 India
-            </button>
-          )}
+
           <button
             className={`rc-tab-btn${activeTab === 'chart' ? ' active' : ''}`}
             onClick={() => setActiveTab('chart')}
@@ -694,167 +687,7 @@ export default function ResultCard({ data, onReanalyze }) {
           </Card>
         )}
 
-        {/* ════════════════════════════════════════
-            INDIA TAB — Screener.in data
-        ════════════════════════════════════════ */}
-        {activeTab === 'india' && isIndian && (<>
 
-          {/* Shareholding Pattern */}
-          {indianData?.shareholding && (
-            <Card>
-              <SectionHeader icon={<Users size={13}/>} title="Shareholding Pattern" accent="#c2410c" />
-              <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 14 }}>
-                Latest: {indianData.shareholding.latestQuarter || 'N/A'}
-              </div>
-              <div className="rc-shp-grid">
-                {[
-                  { label: 'Promoters', val: indianData.shareholding.promoter, color: '#6366f1' },
-                  { label: 'FII / Foreign', val: indianData.shareholding.fii, color: '#059669' },
-                  { label: 'DII / Domestic', val: indianData.shareholding.dii, color: '#d97706' },
-                  { label: 'Public / Others', val: indianData.shareholding.public, color: '#dc2626' },
-                ].filter(s => s.val != null).map((s, i) => {
-                  // Compute delta from trend
-                  const trend = indianData.shareholding.trend;
-                  let delta = null;
-                  if (trend?.length >= 2) {
-                    const key = s.label.toLowerCase().includes('promoter') ? 'promoter'
-                      : s.label.toLowerCase().includes('fii') ? 'fii'
-                      : s.label.toLowerCase().includes('dii') ? 'dii' : 'public';
-                    const first = trend[0]?.[key];
-                    const last = trend[trend.length - 1]?.[key];
-                    if (first != null && last != null) delta = +(last - first).toFixed(2);
-                  }
-                  return (
-                    <div key={i} className="rc-shp-card">
-                      <div className="rc-shp-label">{s.label}</div>
-                      <div className="rc-shp-value">{s.val}%</div>
-                      <div className="rc-shp-bar">
-                        <div className="rc-shp-fill" style={{ width: `${Math.min(s.val, 100)}%`, background: s.color }} />
-                      </div>
-                      {delta != null && (
-                        <div className="rc-shp-delta" style={{ color: delta > 0 ? '#059669' : delta < 0 ? '#dc2626' : '#94a3b8' }}>
-                          {delta > 0 ? '▲' : delta < 0 ? '▼' : '–'} {Math.abs(delta)}% trend
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-          )}
-
-          {/* Quarterly Results */}
-          {indianData?.quarterlyResults?.length > 0 && (
-            <Card>
-              <SectionHeader icon={<Calendar size={13}/>} title="Quarterly Results" accent="#0891b2" />
-              <DataTable
-                accentColor="#0891b2"
-                headers={['Quarter', 'Revenue', 'Op. Profit', 'Net Profit', 'OPM %', 'EPS']}
-                rows={indianData.quarterlyResults.map((q) => [
-                  { val: q.quarter, cls: 'rc-td-year' },
-                  fmtCurrency(q.revenue, 'INR'),
-                  fmtCurrency(q.operatingProfit, 'INR'),
-                  { val: fmtCurrency(q.netProfit, 'INR'), cls: q.netProfit > 0 ? 'rc-positive' : 'rc-negative' },
-                  q.opmPercent != null ? `${q.opmPercent}%` : 'N/A',
-                  q.eps != null ? `₹${fmtNum(q.eps)}` : 'N/A',
-                ])}
-              />
-            </Card>
-          )}
-
-          {/* Key Ratios Grid */}
-          <Card>
-            <SectionHeader icon={<BarChart3 size={13}/>} title="Key Ratios (Screener.in)" accent="#c2410c" />
-            <div className="rc-india-metric-grid">
-              {[
-                { label: 'P/E Ratio', value: fmtNum(km.peRatio) },
-                { label: 'P/B Ratio', value: fmtNum(km.pbRatio) },
-                { label: 'ROCE', value: km.returnOnCapitalEmployed != null ? fmtPct(km.returnOnCapitalEmployed) : 'N/A' },
-                { label: 'ROE', value: km.roe != null ? fmtPct(km.roe) : 'N/A' },
-                { label: 'Dividend Yield', value: km.dividendYield != null ? fmtPct(km.dividendYield) : 'N/A' },
-                { label: 'Debt/Equity', value: fmtNum(km.debtToEquity) },
-                { label: 'Current Ratio', value: fmtNum(km.currentRatio) },
-                { label: 'EV/EBITDA', value: fmtNum(km.evToEbitda) },
-                { label: 'Interest Coverage', value: fmtNum(km.interestCoverage) },
-                { label: 'P/S Ratio', value: fmtNum(km.priceToSales) },
-              ].filter(c => c.value !== 'N/A').map((c, i) => (
-                <div key={i} className="rc-india-metric">
-                  <div className="rc-india-metric-label">{c.label}</div>
-                  <div className="rc-india-metric-value">{c.value}</div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Annual Income Statement */}
-          {income.length > 0 && (
-            <Card>
-              <SectionHeader icon={<DollarSign size={13}/>} title="Annual Income Statement (Screener.in)" accent="#6366f1" />
-              <DataTable
-                accentColor="#6366f1"
-                headers={['Year', 'Revenue', 'Op. Income', 'Op. Margin', 'Net Income', 'Net Margin', 'EPS', 'EBITDA']}
-                rows={income.map((d) => [
-                  { val: d.year, cls: 'rc-td-year' },
-                  fmtCurrency(d.revenue, 'INR'),
-                  fmtCurrency(d.operatingIncome, 'INR'),
-                  { val: fmtPct(d.operatingMargin), cls: 'rc-positive' },
-                  { val: fmtCurrency(d.netIncome, 'INR'), cls: d.netIncome > 0 ? 'rc-positive' : 'rc-negative' },
-                  { val: fmtPct(d.netMargin), cls: 'rc-positive' },
-                  d.eps != null ? `₹${fmtNum(d.eps)}` : 'N/A',
-                  fmtCurrency(d.ebitda, 'INR'),
-                ])}
-              />
-            </Card>
-          )}
-
-          {/* Annual Balance Sheet */}
-          {balance.length > 0 && (
-            <Card>
-              <SectionHeader icon={<Building2 size={13}/>} title="Annual Balance Sheet (Screener.in)" accent="#7c3aed" />
-              <DataTable
-                accentColor="#7c3aed"
-                headers={['Year', 'Cash', 'Total Assets', 'Total Debt', 'Total Liabilities', 'Total Equity']}
-                rows={balance.map((d) => [
-                  { val: d.year, cls: 'rc-td-year' },
-                  fmtCurrency(d.cash, 'INR'),
-                  fmtCurrency(d.totalAssets, 'INR'),
-                  { val: fmtCurrency(d.totalDebt, 'INR'), cls: 'rc-negative' },
-                  { val: fmtCurrency(d.totalLiabilities, 'INR'), cls: 'rc-negative' },
-                  { val: fmtCurrency(d.totalEquity, 'INR'), cls: 'rc-positive' },
-                ])}
-              />
-            </Card>
-          )}
-
-          {/* Annual Cash Flow */}
-          {cashflow.length > 0 && (
-            <Card>
-              <SectionHeader icon={<Activity size={13}/>} title="Annual Cash Flow (Screener.in)" accent="#0891b2" />
-              <DataTable
-                accentColor="#0891b2"
-                headers={['Year', 'Operating CF', 'CapEx', 'Free CF', 'Dividends Paid']}
-                rows={cashflow.map((d) => [
-                  { val: d.year, cls: 'rc-td-year' },
-                  { val: fmtCurrency(d.operatingCashFlow, 'INR'), cls: 'rc-positive' },
-                  { val: fmtCurrency(d.capitalExpenditure, 'INR'), cls: 'rc-negative' },
-                  { val: fmtCurrency(d.freeCashFlow, 'INR'), cls: d.freeCashFlow > 0 ? 'rc-positive' : 'rc-negative' },
-                  fmtCurrency(Math.abs(d.dividendsPaid || 0), 'INR'),
-                ])}
-              />
-            </Card>
-          )}
-
-          {/* Peers */}
-          {peers.length > 0 && (
-            <Card>
-              <SectionHeader icon={<Users size={13}/>} title="Peer Companies" accent="#7c3aed" />
-              <div className="rc-peers-list">
-                {peers.map((p, i) => <span key={i} className="rc-peer-chip">{p}</span>)}
-              </div>
-            </Card>
-          )}
-
-        </>)}
 
         {/* ════════════════════════════════════════
             OVERVIEW TAB (all existing cards)
@@ -1393,6 +1226,157 @@ export default function ResultCard({ data, onReanalyze }) {
             </div>
           </Card>
         )}
+
+        {/* ════════════════════════════════════════
+            INDIA SECTION — Screener.in (shown in Overview)
+        ════════════════════════════════════════ */}
+        {isIndian && (<>
+
+          {/* Shareholding Pattern */}
+          {indianData?.shareholding && (
+            <Card>
+              <SectionHeader icon={<Users size={13}/>} title="Shareholding Pattern" accent="#c2410c" />
+              <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 14 }}>
+                Latest: {indianData.shareholding.latestQuarter || 'N/A'}
+              </div>
+              <div className="rc-shp-grid">
+                {[
+                  { label: 'Promoters', val: indianData.shareholding.promoter, color: '#6366f1' },
+                  { label: 'FII / Foreign', val: indianData.shareholding.fii, color: '#059669' },
+                  { label: 'DII / Domestic', val: indianData.shareholding.dii, color: '#d97706' },
+                  { label: 'Public / Others', val: indianData.shareholding.public, color: '#dc2626' },
+                ].filter(s => s.val != null).map((s, i) => {
+                  const trend = indianData.shareholding.trend;
+                  let delta = null;
+                  if (trend?.length >= 2) {
+                    const key = s.label.toLowerCase().includes('promoter') ? 'promoter'
+                      : s.label.toLowerCase().includes('fii') ? 'fii'
+                      : s.label.toLowerCase().includes('dii') ? 'dii' : 'public';
+                    const first = trend[0]?.[key];
+                    const last = trend[trend.length - 1]?.[key];
+                    if (first != null && last != null) delta = +(last - first).toFixed(2);
+                  }
+                  return (
+                    <div key={i} className="rc-shp-card">
+                      <div className="rc-shp-label">{s.label}</div>
+                      <div className="rc-shp-value">{s.val}%</div>
+                      <div className="rc-shp-bar">
+                        <div className="rc-shp-fill" style={{ width: `${Math.min(s.val, 100)}%`, background: s.color }} />
+                      </div>
+                      {delta != null && (
+                        <div className="rc-shp-delta" style={{ color: delta > 0 ? '#059669' : delta < 0 ? '#dc2626' : '#94a3b8' }}>
+                          {delta > 0 ? '▲' : delta < 0 ? '▼' : '–'} {Math.abs(delta)}% trend
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {/* Quarterly Results */}
+          {indianData?.quarterlyResults?.length > 0 && (
+            <Card>
+              <SectionHeader icon={<Calendar size={13}/>} title="Quarterly Results" accent="#0891b2" />
+              <DataTable
+                accentColor="#0891b2"
+                headers={['Quarter', 'Revenue', 'Op. Profit', 'Net Profit', 'OPM %', 'EPS']}
+                rows={indianData.quarterlyResults.map((q) => [
+                  { val: q.quarter, cls: 'rc-td-year' },
+                  fmtCurrency(q.revenue, 'INR'),
+                  fmtCurrency(q.operatingProfit, 'INR'),
+                  { val: fmtCurrency(q.netProfit, 'INR'), cls: q.netProfit > 0 ? 'rc-positive' : 'rc-negative' },
+                  q.opmPercent != null ? `${q.opmPercent}%` : 'N/A',
+                  q.eps != null ? `₹${fmtNum(q.eps)}` : 'N/A',
+                ])}
+              />
+            </Card>
+          )}
+
+          {/* Key Ratios Grid */}
+          <Card>
+            <SectionHeader icon={<BarChart3 size={13}/>} title="Key Ratios — Screener.in" accent="#c2410c" />
+            <div className="rc-india-metric-grid">
+              {[
+                { label: 'P/E Ratio', value: fmtNum(km.peRatio) },
+                { label: 'P/B Ratio', value: fmtNum(km.pbRatio) },
+                { label: 'ROCE', value: km.returnOnCapitalEmployed != null ? fmtPct(km.returnOnCapitalEmployed) : 'N/A' },
+                { label: 'ROE', value: km.roe != null ? fmtPct(km.roe) : 'N/A' },
+                { label: 'Dividend Yield', value: km.dividendYield != null ? fmtPct(km.dividendYield) : 'N/A' },
+                { label: 'Debt/Equity', value: fmtNum(km.debtToEquity) },
+                { label: 'Current Ratio', value: fmtNum(km.currentRatio) },
+                { label: 'EV/EBITDA', value: fmtNum(km.evToEbitda) },
+                { label: 'Interest Coverage', value: fmtNum(km.interestCoverage) },
+                { label: 'P/S Ratio', value: fmtNum(km.priceToSales) },
+              ].filter(c => c.value !== 'N/A').map((c, i) => (
+                <div key={i} className="rc-india-metric">
+                  <div className="rc-india-metric-label">{c.label}</div>
+                  <div className="rc-india-metric-value">{c.value}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Annual Income Statement */}
+          {income.length > 0 && (
+            <Card>
+              <SectionHeader icon={<DollarSign size={13}/>} title="Annual Income Statement — Screener.in" accent="#6366f1" />
+              <DataTable
+                accentColor="#6366f1"
+                headers={['Year', 'Revenue', 'Op. Income', 'Op. Margin', 'Net Income', 'Net Margin', 'EPS', 'EBITDA']}
+                rows={income.map((d) => [
+                  { val: d.year, cls: 'rc-td-year' },
+                  fmtCurrency(d.revenue, 'INR'),
+                  fmtCurrency(d.operatingIncome, 'INR'),
+                  { val: fmtPct(d.operatingMargin), cls: 'rc-positive' },
+                  { val: fmtCurrency(d.netIncome, 'INR'), cls: d.netIncome > 0 ? 'rc-positive' : 'rc-negative' },
+                  { val: fmtPct(d.netMargin), cls: 'rc-positive' },
+                  d.eps != null ? `₹${fmtNum(d.eps)}` : 'N/A',
+                  fmtCurrency(d.ebitda, 'INR'),
+                ])}
+              />
+            </Card>
+          )}
+
+          {/* Annual Balance Sheet */}
+          {balance.length > 0 && (
+            <Card>
+              <SectionHeader icon={<Building2 size={13}/>} title="Annual Balance Sheet — Screener.in" accent="#7c3aed" />
+              <DataTable
+                accentColor="#7c3aed"
+                headers={['Year', 'Cash', 'Total Assets', 'Total Debt', 'Total Liabilities', 'Total Equity']}
+                rows={balance.map((d) => [
+                  { val: d.year, cls: 'rc-td-year' },
+                  fmtCurrency(d.cash, 'INR'),
+                  fmtCurrency(d.totalAssets, 'INR'),
+                  { val: fmtCurrency(d.totalDebt, 'INR'), cls: 'rc-negative' },
+                  { val: fmtCurrency(d.totalLiabilities, 'INR'), cls: 'rc-negative' },
+                  { val: fmtCurrency(d.totalEquity, 'INR'), cls: 'rc-positive' },
+                ])}
+              />
+            </Card>
+          )}
+
+          {/* Annual Cash Flow */}
+          {cashflow.length > 0 && (
+            <Card>
+              <SectionHeader icon={<Activity size={13}/>} title="Annual Cash Flow — Screener.in" accent="#0891b2" />
+              <DataTable
+                accentColor="#0891b2"
+                headers={['Year', 'Operating CF', 'CapEx', 'Free CF', 'Dividends Paid']}
+                rows={cashflow.map((d) => [
+                  { val: d.year, cls: 'rc-td-year' },
+                  { val: fmtCurrency(d.operatingCashFlow, 'INR'), cls: 'rc-positive' },
+                  { val: fmtCurrency(d.capitalExpenditure, 'INR'), cls: 'rc-negative' },
+                  { val: fmtCurrency(d.freeCashFlow, 'INR'), cls: d.freeCashFlow > 0 ? 'rc-positive' : 'rc-negative' },
+                  fmtCurrency(Math.abs(d.dividendsPaid || 0), 'INR'),
+                ])}
+              />
+            </Card>
+          )}
+
+        </>)}
 
         </>) /* end overview tab */}
 
