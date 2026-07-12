@@ -344,22 +344,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
-      <section className="lp-cta">
-        <div className="lp-orb lp-orb-4" />
-        <div className="lp-cta-inner">
-          <div className="lp-cta-badge">Ready to invest smarter?</div>
-          <h2 className="lp-cta-h2">Start your first analysis<br />in under 30 seconds</h2>
-          <p className="lp-cta-sub">
-            No sign-up. No credit card. Just search a company and let the AI do the work.
-          </p>
-          <button className="lp-btn-primary lp-btn-large" onClick={() => navigate('/app')}>
-            <span>Launch IntellyInvest</span>
-            <span className="lp-btn-arrow">→</span>
-          </button>
-          <p className="lp-cta-hint">Try: NVIDIA · Apple · Tesla · Reliance · Infosys</p>
-        </div>
-      </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="lp-footer">
