@@ -831,13 +831,25 @@ body {
 /* ──────────────────────────────────────────────────────────────────────────
    SPOTLIGHT MODAL
 ────────────────────────────────────────────────────────────────────────── */
+
+/* Direct content blur — works in all environments including production.
+   Targets the page layout directly instead of relying on backdrop-filter. */
+body.spotlight-open .sidebar,
+body.spotlight-open .main,
+body.spotlight-open .mobile-topbar {
+  filter: blur(6px) brightness(0.7);
+  -webkit-filter: blur(6px) brightness(0.7);
+  transform: scale(0.995);
+  transition: filter 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
 .spotlight-backdrop {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(10, 15, 35, 0.60);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: rgba(10, 15, 35, 0.45);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -849,6 +861,7 @@ body {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
 
 .spotlight-modal {
   width: 100%;

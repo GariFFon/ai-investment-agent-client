@@ -275,6 +275,16 @@ export default function App() {
   const [showSpotlight, setShowSpotlight] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Apply direct blur to page content when spotlight is open (more reliable than backdrop-filter)
+  useEffect(() => {
+    if (showSpotlight) {
+      document.body.classList.add('spotlight-open');
+    } else {
+      document.body.classList.remove('spotlight-open');
+    }
+    return () => document.body.classList.remove('spotlight-open');
+  }, [showSpotlight]);
+
   useEffect(() => {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
