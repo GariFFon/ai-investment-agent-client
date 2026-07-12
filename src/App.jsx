@@ -330,7 +330,7 @@ export default function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app${showSpotlight ? ' spotlight-open' : ''}`}>
       {showSpotlight && (
         <SpotlightModal
           onClose={() => setShowSpotlight(false)}
