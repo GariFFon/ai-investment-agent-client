@@ -37,7 +37,6 @@ const fmtLargeNum = (v) => {
 /* Verdict config */
 const VERDICT_CFG = {
   INVEST: { color: '#059669', bg: '#f0fdf4', border: '#bbf7d0', glow: 'rgba(5,150,105,0.12)', icon: '✓', label: 'INVEST' },
-  HOLD:   { color: '#d97706', bg: '#fffbeb', border: '#fcd34d', glow: 'rgba(217,119,6,0.12)',  icon: '~', label: 'HOLD'   },
   PASS:   { color: '#dc2626', bg: '#fef2f2', border: '#fecaca', glow: 'rgba(220,38,38,0.12)',  icon: '✗', label: 'PASS'   },
 };
 
@@ -272,7 +271,7 @@ export default function ResultCard({ data, onReanalyze }) {
     try { await onReanalyze(); } finally { setReanalyzing(false); }
   };
 
-  const vc      = VERDICT_CFG[data.verdict] ?? VERDICT_CFG.HOLD;
+  const vc      = VERDICT_CFG[data.verdict] ?? VERDICT_CFG.PASS;
   const raw     = data.rawData ?? {};
   const profile = raw.companyProfile  ?? {};
   
