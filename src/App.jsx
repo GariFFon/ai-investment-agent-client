@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import LoadingState from './components/LoadingState';
 import ResultCard from './components/ResultCard';
@@ -52,7 +51,7 @@ function SpotlightModal({ onClose, onSelect }) {
     }
   };
 
-  const modalContent = (
+  return (
     <div className="spotlight-backdrop" onClick={handleBackdrop}>
       <div className="spotlight-modal" role="dialog" aria-label="Search company">
         {/* Search bar */}
@@ -126,8 +125,6 @@ function SpotlightModal({ onClose, onSelect }) {
       </div>
     </div>
   );
-
-  return createPortal(modalContent, document.body);
 }
 
 /* ── Relative time helper ─────────────────────────────────────────────── */
