@@ -2,6 +2,10 @@
 
 > Built for the InsideIIM × Altuni AI Labs — AI Product Intern Assignment.
 
+**🌐 Live Demo:** [ai-investment-agent-client.vercel.app](https://ai-investment-agent-client.vercel.app/)
+**⚙️ Backend API:** [ai-investment-agent-backend-9mfy.onrender.com](https://ai-investment-agent-backend-9mfy.onrender.com)
+**❤️ Health Check:** [/health](https://ai-investment-agent-backend-9mfy.onrender.com/health)
+
 ---
 
 ## Overview
@@ -217,6 +221,167 @@ The `ANALYST_PROMPT` instructs Gemini to evaluate companies across 8 dimensions:
 
 ---
 
+## Every Data Point the AI Evaluates
+
+The AI pulls data from multiple sources and evaluates companies across 9 data categories before Gemini makes a decision. Every field below is embedded directly into the Gemini prompt.
+
+### 🗂️ Data Sources
+
+| Source | Used For |
+|--------|----------|
+| **FMP (Financial Modeling Prep)** | All companies — primary source (profile, financials, ratios, news, peers) |
+| **Yahoo Finance** | All companies — supplemental analyst consensus, ownership, estimates |
+| **SEC EDGAR** | US companies only — official government 10-K/10-Q filing data |
+| **Screener.in** | Indian companies only (NSE/BSE) — fundamentals via web scrape |
+
+---
+
+### 📋 Category 1 — Company Profile
+*Source: FMP API*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Company Name, Ticker, Exchange | Identity and market listing |
+| Sector & Industry | Peer comparison context |
+| Business Description | What the company sells and who it serves |
+| CEO Name | Leadership continuity signal |
+| Full-time Employees | Company size and operational scale |
+| Market Cap | Current market valuation |
+| Current Stock Price | Entry point reference |
+| Beta | Volatility relative to the market |
+| Website, Country, IPO Date | Geography and business maturity |
+
+### 📋 Category 2 — Income Statement (Last 3 Years)
+*Source: FMP API*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Revenue | Top-line growth trajectory |
+| Gross Profit & Gross Margin | Pricing power and cost of production |
+| Operating Income & Operating Margin | Core business profitability before interest/tax |
+| Net Income & Net Margin | Bottom-line profitability |
+| EPS (Earnings Per Share) | Per-share earnings trend |
+| EBITDA | Cash earnings proxy; used in EV/EBITDA valuation |
+
+### 📋 Category 3 — Balance Sheet (Last 3 Years)
+*Source: FMP API*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Cash & Cash Equivalents | Immediate liquidity and runway |
+| Total Assets | Size of the business's resource base |
+| Total Debt | Financial leverage and repayment burden |
+| Total Liabilities | Overall obligations vs assets |
+| Total Shareholders' Equity | Net worth; base for ROE calculation |
+| Current Ratio | Short-term liquidity health (current assets / current liabilities) |
+
+### 📋 Category 4 — Cash Flow Statement (Last 3 Years)
+*Source: FMP API*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Operating Cash Flow | Real cash generated from the core business |
+| Capital Expenditure (CapEx) | Investment in growth vs maintenance |
+| Free Cash Flow | Cash left after CapEx — funds buybacks, dividends, debt paydown |
+| Dividends Paid | Shareholder return commitment |
+
+### 📋 Category 5 — Key Metrics & Valuation Ratios
+*Source: FMP API*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| P/E Ratio (Price to Earnings) | Is the stock cheap or expensive relative to earnings? |
+| P/B Ratio (Price to Book) | Market price vs accounting value of the company |
+| EV/EBITDA | Enterprise valuation independent of capital structure |
+| Price to Sales | Valuation for pre-profit or low-margin companies |
+| Debt to Equity | Financial leverage risk |
+| ROE (Return on Equity) | How efficiently is shareholder capital being used? |
+| ROA (Return on Assets) | Asset utilization efficiency |
+| Interest Coverage Ratio | Can the company comfortably service its debt? |
+| Dividend Yield | Income return for shareholders |
+| Payout Ratio | Sustainability of dividend payments |
+
+### 📋 Category 6 — Recent News (Last 8 Articles)
+*Source: FMP API*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Article Title & Date | Recency and relevance of news |
+| Source Publication | Credibility context |
+| Article Summary (first 200 chars) | Catalysts, red flags, regulatory actions, product launches |
+
+### 📋 Category 7 — Yahoo Finance Supplemental Data
+*Source: Yahoo Finance (via `yahoo-finance2`)*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Analyst Consensus (buy/hold/sell) | Aggregated professional view on the stock |
+| Mean Analyst Score (1–5) | 1 = Strong Buy, 5 = Sell |
+| Number of Analysts Covering | Breadth and reliability of consensus |
+| Price Targets — Mean, Low, High | Expected price range from Wall Street |
+| Buy/Hold/Sell Counts (this month) | Current directional analyst sentiment |
+| EPS Estimates (next 4 periods) | Forward earnings expectations |
+| Revenue Estimates (next 4 periods) | Forward growth expectations |
+| Quarterly Earnings Beats/Misses | Track record of delivering vs expectations |
+| Institutional & Insider Ownership | Smart money positioning |
+| Recent Analyst Upgrades/Downgrades | Shifting conviction among professionals |
+| Forward P/E | Valuation on expected future earnings |
+| PEG Ratio | P/E adjusted for growth rate |
+| Enterprise Value, EV/Revenue, EV/EBITDA | Acquisition-style valuation multiples |
+| Short % of Float | Market's bet against the stock |
+| 52-Week Price Change | Momentum context |
+| Revenue Growth YoY & Earnings Growth YoY | Recent performance acceleration/deceleration |
+
+### 📋 Category 8 — SEC EDGAR Official Filings (US Companies Only)
+*Source: SEC EDGAR U.S. Government Database*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Revenue History (annual, 10-K) | Independently verified top-line growth |
+| Net Income History (annual) | Official bottom-line profitability |
+| EPS Diluted History (annual) | Per-share earnings from government filings |
+| R&D Expense History | Innovation investment trend |
+| Operating Cash Flow History | Verified cash generation |
+| Total Assets History | Balance sheet growth |
+| Shares Outstanding History | Dilution monitoring |
+| Latest 10-K & 10-Q Filing Dates | Filing recency and regulatory compliance |
+| Recent 8-K Count (last 90 days) | Frequency of material event disclosures |
+
+> **Why EDGAR?** It cross-validates FMP and Yahoo data against the official U.S. government source. Any large discrepancy is flagged as LOW agreement in the prompt, prompting Gemini to caveat its analysis.
+
+### 🇮🇳 Category 9 — Indian-Specific Data (NSE/BSE Companies Only)
+*Source: Screener.in (web scrape via Cheerio) + Yahoo Finance*
+
+| Field | What it tells the AI |
+|-------|---------------------|
+| Shareholding Pattern — Promoter %, FII %, DII %, Public % | Ownership structure and insider alignment |
+| Shareholding Trend (quarterly history) | Is the promoter buying more or reducing stake? |
+| Quarterly Results (last 8 quarters) — Revenue, Net Profit, OPM% | Sequential growth/decline momentum |
+| Quarterly Momentum (latest vs prior quarter) | Is the business accelerating or decelerating right now? |
+| Historical Key Ratios (multi-year) | Long-run ROCE, ROE, debt trends from Screener.in |
+| ROCE (Return on Capital Employed) | #1 metric for Indian equity investors; >15% is good, >25% is excellent |
+
+> **Why Screener.in?** FMP's free tier has very limited coverage of NSE/BSE-listed companies. Screener.in is the most trusted Indian equity data source, providing quarterly P&L, shareholding patterns, and multi-year ratios that are simply unavailable elsewhere for free.
+
+### 🧠 How Gemini Synthesizes All of This
+
+After receiving all 9 categories of data (3,000–5,000 tokens in a single prompt), Gemini evaluates the company across **8 analytical dimensions** and outputs a structured JSON verdict:
+
+| Dimension | Key Questions Asked |
+|-----------|--------------------|
+| Business Quality | Is the product essential? Is demand secular or cyclical? |
+| Financial Health | Is revenue growing? Are margins stable or expanding? Is debt manageable? |
+| Profitability | How efficiently is capital deployed? (ROE, ROCE, net margins vs peers) |
+| Valuation | Is the current price justified? (P/E, EV/EBITDA vs history and sector) |
+| Competitive Moat | What prevents competitors from taking market share? |
+| Growth Prospects | What is the revenue CAGR? Is the total addressable market expanding? |
+| Risk Factors | What could go wrong? (debt, regulation, macro, competition) |
+| Recent News | Are there near-term catalysts or red flags in the last 8 headlines? |
+
+**Final output:** `INVEST` or `PASS` with confidence (0–100), 4 strengths, 3 risks, detailed reasoning paragraph, and a full financial summary.
+
+---
+
 ## Key Decisions & Trade-offs
 
 | Decision | Choice Made | Rationale |
@@ -232,9 +397,12 @@ The `ANALYST_PROMPT` instructs Gemini to evaluate companies across 8 dimensions:
 | **News feed** | Yahoo Finance RSS (no key) | Zero API quota cost. Provides real-time market context without requiring an additional paid subscription. |
 | **Frontend** | React 19 + Vite + Tailwind CSS v4 | Vite for fast HMR. Tailwind for utility-first styling. Recharts for charts. |
 | **Search UX** | Spotlight modal (`⌘K`) | Familiar power-user pattern (VS Code, Linear). 320ms debounce prevents hammering the search API on every keystroke. |
+| **Data coverage (US + India only)** | FMP (US) + Screener.in (India) | Intentional scope decision — see "What I Left Out" below. These two markets cover the most relevant investment universe for the target user base, and are the only markets with free, reliable, machine-readable data sources available. |
+| **9-category data architecture** | Profile + Income + Balance Sheet + Cash Flow + Ratios + News + Yahoo + EDGAR + India | A company can only be fairly evaluated when all dimensions of financial health are assessed together. Each category catches something the others miss: ratios catch leverage, cash flow catches earnings quality, EDGAR catches data integrity, India data catches promoter behaviour. |
 
 ### What I Left Out (and Why)
 
+- **Other country markets (Europe, China, Japan, etc.)** — Accurate, structured, machine-readable fundamentals data for non-US/non-Indian listed companies (e.g., LSE, Tokyo Stock Exchange, Hong Kong Stock Exchange, Euronext) requires paid subscriptions. FMP's free tier, Yahoo Finance, and equivalent sources either don't cover these markets with the same depth or gate the data behind enterprise plans. Supporting UK/EU/Asian markets would require a paid Bloomberg, Refinitiv, or premium FMP subscription — out of scope for this project.
 - **Real-time price streaming** — Needs WebSockets + paid data feed; overkill for fundamentals analysis
 - **DCF model** — Requires user-adjustable assumptions (WACC, growth rate, terminal value) — valuable but a separate complex feature
 - **User auth / watchlists** — Out of scope; requires sessions and user-specific MongoDB collections
