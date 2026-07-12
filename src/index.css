@@ -1105,12 +1105,220 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   RESPONSIVE
+   MOBILE TOP BAR & HAMBURGER
 ────────────────────────────────────────────────────────────────────────── */
+.mobile-topbar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  z-index: 1000;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 8px rgba(15,23,42,0.07);
+  padding: 0 16px;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  text-decoration: none !important;
+}
+
+.mobile-logo-text {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mobile-hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background var(--duration-fast) var(--ease);
+  flex-shrink: 0;
+}
+.mobile-hamburger:hover { background: var(--bg-hover); }
+
+.hamburger-line {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: transform var(--duration-base) var(--ease), opacity var(--duration-base) var(--ease);
+  transform-origin: center;
+}
+
+.hamburger-line.open:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-line.open:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger-line.open:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.mobile-search-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 9px;
+  color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease-spring);
+}
+.mobile-search-btn:hover { background: var(--accent); color: #fff; transform: scale(1.05); }
+.mobile-search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Sidebar backdrop for mobile */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(15,23,42,0.38);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: backdropIn var(--duration-fast) var(--ease);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   RESPONSIVE BREAKPOINTS
+────────────────────────────────────────────────────────────────────────── */
+
+/* — Tablet wide (1100px) — */
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 240px 1fr; }
+  .sidebar { padding: 20px 12px; }
+  .main { padding: 28px 28px; }
+}
+
+/* — Tablet (900px) — */
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .main { padding: 24px 18px; }
+  /* Switch to single-column, sidebar becomes a fixed overlay */
+  .app {
+    grid-template-columns: 1fr;
+    padding-top: 56px; /* push content below mobile topbar */
+  }
+
+  /* Mobile top bar visible */
+  .mobile-topbar { display: flex; }
+
+  /* Sidebar becomes fixed slide-in drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform var(--duration-base) var(--ease);
+    padding-top: 72px;
+    box-shadow: none;
+  }
+
+  .sidebar.sidebar-mobile-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 32px rgba(15,23,42,0.18);
+  }
+
+  .main { padding: 20px 16px; }
+
+  /* Tab bar — horizontal scroll on mobile */
+  .rc-tab-bar {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0;
+  }
+  .rc-tab-bar::-webkit-scrollbar { display: none; }
+  .rc-tab-btn { white-space: nowrap; padding: 8px 14px; font-size: 12px; }
+
+  /* Stock chart */
+  .sc-current-price { font-size: 26px; }
+  .sc-ranges { flex-wrap: wrap; }
+
+  /* Spotlight modal */
+  .spotlight-backdrop { padding-top: 10vh; padding-left: 12px; padding-right: 12px; }
+  .spotlight-modal { border-radius: 16px; }
+
+  /* Market news feed */
+  .market-news-feed { padding: 16px 0 24px; }
+  .news-feed-title { font-size: 22px; }
+  .news-filter-tabs { gap: 6px; }
+  .news-filter-tab { padding: 7px 14px; font-size: 13px; }
+}
+
+/* — Mobile (640px) — */
+@media (max-width: 640px) {
+  .main { padding: 16px 12px; }
+
+  /* Stat pills — 2 columns */
+  .sc-stats-strip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .sc-stat-pill { min-width: unset; }
+
+  /* Range buttons — wrap */
+  .sc-ranges { flex-wrap: wrap; padding: 4px; }
+  .sc-range-btn { padding: 5px 8px; font-size: 11px; }
+
+  /* Current price */
+  .sc-current-price { font-size: 22px; }
+  .sc-header { gap: 8px; }
+
+  /* Loading card */
+  .loading-card { padding: 36px 20px; }
+
+  /* Error card */
+  .error-card { padding: 14px 16px; font-size: 13px; }
+
+  /* Empty state */
+  .empty-state h2 { font-size: 18px; }
+  .empty-state p { font-size: 13px; }
+
+  /* Spotlight — full-width on phone */
+  .spotlight-backdrop { padding-top: 6vh; padding-left: 0; padding-right: 0; align-items: flex-start; }
+  .spotlight-modal { border-radius: 0 0 20px 20px; }
+  .spotlight-input { font-size: 15px; }
+  .spotlight-result-tags { display: none; } /* hide tag pills to save space */
+
+  /* News grid — single col */
+  .news-grid { grid-template-columns: 1fr; }
+  .news-feed-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .market-news-feed { padding: 12px 0 20px; }
+  .news-feed-title { font-size: 20px; }
+}
+
+/* — Very small (480px) — */
+@media (max-width: 480px) {
+  .sidebar { width: 100%; }
+  .main { padding: 14px 10px; }
+  .sc-stat-pill { padding: 6px 8px; }
+  .sc-stat-val { font-size: 12px; }
+  .sc-stat-label { font-size: 8.5px; }
+  .rc-tab-btn { padding: 6px 10px; font-size: 11.5px; }
 }
 
 /* ── Tailwind utility classes for WaveLoader ── */

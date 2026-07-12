@@ -656,6 +656,57 @@ export default function ResultCard({ data, onReanalyze }) {
         .rc-india-metric { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border: 1px solid #fed7aa; border-radius: 12px; padding: 12px 14px; }
         .rc-india-metric-label { font-size: 10px; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
         .rc-india-metric-value { font-size: 17px; font-weight: 800; color: #78350f; }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+          .rc-card { padding: 18px; border-radius: 14px; }
+          .rc-company-name { font-size: 22px; }
+          .rc-price { font-size: 24px; }
+          .rc-verdict-pill { padding: 12px 24px; font-size: 18px; }
+          .rc-verdict-grid { gap: 16px; }
+          .rc-km-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+          .rc-earnings-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+          .rc-analyst-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+          .rc-ownership-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+          .rc-eps-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        }
+
+        @media (max-width: 640px) {
+          .rc-card { padding: 14px; border-radius: 12px; }
+          .rc-company-name { font-size: 19px; }
+          .rc-price { font-size: 20px; }
+          .rc-price-block { text-align: left; }
+          .rc-header-flex { flex-direction: column; gap: 10px; }
+          .rc-verdict-pill { padding: 10px 18px; font-size: 16px; width: 100%; justify-content: center; }
+          .rc-verdict-grid { flex-direction: column; gap: 14px; }
+          .rc-confidence-side { min-width: unset; }
+          .rc-km-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+          .rc-km-value { font-size: 15px; }
+          .rc-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .rc-earnings-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-analyst-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-ownership-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-eps-grid { grid-template-columns: 1fr; }
+          .rc-yf-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-shp-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-india-metric-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-target-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+          .rc-target-divider { width: 100%; height: 1px; }
+          .rc-action-firm { min-width: unset; }
+          .rc-action-item { flex-wrap: wrap; gap: 6px; }
+          .rc-description { font-size: 13px; }
+          .rc-reasoning-text { font-size: 13px; }
+          .rc-news-top { flex-direction: column; gap: 6px; }
+        }
+
+        @media (max-width: 480px) {
+          .rc-card { padding: 12px; }
+          .rc-company-name { font-size: 17px; }
+          .rc-km-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .rc-badges { gap: 4px; }
+          .rc-badge { font-size: 10.5px; padding: 2px 8px; }
+        }
       `}</style>
 
       <div className="rc-dashboard">

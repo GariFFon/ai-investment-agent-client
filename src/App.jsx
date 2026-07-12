@@ -273,6 +273,7 @@ export default function App() {
   const [currentCompany, setCurrentCompany] = useState('');
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [showSpotlight, setShowSpotlight] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
@@ -333,13 +334,43 @@ export default function App() {
       {showSpotlight && (
         <SpotlightModal
           onClose={() => setShowSpotlight(false)}
-          onSelect={(name, ticker) => handleSearch(name, ticker)}
+          onSelect={(name, ticker) => { setSidebarOpen(false); handleSearch(name, ticker); }}
         />
       )}
 
+      {/* ── Mobile Top-Bar ── */}
+      <header className="mobile-topbar">
+        <button
+          className="mobile-hamburger"
+          onClick={() => setSidebarOpen((o) => !o)}
+          aria-label="Toggle menu"
+        >
+          <span className={`hamburger-line${sidebarOpen ? ' open' : ''}`} />
+          <span className={`hamburger-line${sidebarOpen ? ' open' : ''}`} />
+          <span className={`hamburger-line${sidebarOpen ? ' open' : ''}`} />
+        </button>
+        <Link to="/" className="mobile-logo" style={{ textDecoration: 'none' }}>
+          <div className="logo-icon" style={{ width: 28, height: 28, fontSize: 13 }}>📈</div>
+          <span className="mobile-logo-text">IntellyInvest</span>
+        </Link>
+        <button
+          className="mobile-search-btn"
+          onClick={() => setShowSpotlight(true)}
+          disabled={loading}
+          aria-label="Search"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </header>
+
+      {/* ── Sidebar Backdrop (mobile) ── */}
+      {sidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className="sidebar">
-        <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none' }}>
+      <aside className={`sidebar${sidebarOpen ? ' sidebar-mobile-open' : ''}`}>
+        <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
           <div className="logo-icon">📈</div>
           <h2>IntellyInvest</h2>
         </Link>
@@ -347,7 +378,7 @@ export default function App() {
         <div className="new-analysis-btn-wrapper">
           <button
             className="new-analysis-btn"
-            onClick={() => setShowSpotlight(true)}
+            onClick={() => { setSidebarOpen(false); setShowSpotlight(true); }}
             disabled={loading}
           >
             <span className="new-analysis-plus">+</span>
@@ -356,7 +387,7 @@ export default function App() {
           </button>
         </div>
 
-        <HistoryPanel onSelect={handleHistorySelect} refreshTrigger={refreshHistory} />
+        <HistoryPanel onSelect={(item) => { setSidebarOpen(false); handleHistorySelect(item); }} refreshTrigger={refreshHistory} />
       </aside>
 
       {/* ── Main ── */}
