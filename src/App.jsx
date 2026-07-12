@@ -344,15 +344,17 @@ export default function App() {
           <h2>IntellyInvest</h2>
         </Link>
 
-        <button
-          className="new-analysis-btn"
-          onClick={() => setShowSpotlight(true)}
-          disabled={loading}
-        >
-          <span className="new-analysis-plus">+</span>
-          New Analysis
-          <kbd className="new-analysis-kbd">⌘K</kbd>
-        </button>
+        <div className="new-analysis-btn-wrapper">
+          <button
+            className="new-analysis-btn"
+            onClick={() => setShowSpotlight(true)}
+            disabled={loading}
+          >
+            <span className="new-analysis-plus">+</span>
+            New Analysis
+            <kbd className="new-analysis-kbd">⌘K</kbd>
+          </button>
+        </div>
 
         <HistoryPanel onSelect={handleHistorySelect} refreshTrigger={refreshHistory} />
       </aside>
